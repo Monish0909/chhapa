@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lookbook — chhapa</title>
+
+  <!-- Google Fonts: Playfair Display & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* -------------------------------------------------------------
+       RESET & BASE STYLES
+       ------------------------------------------------------------- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      background-color: #140A05;
+      color: #3D2418;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    ::selection {
+      background: #C85A32;
+      color: #FDF8F0;
+    }
+
+    /* -------------------------------------------------------------
+       1. FIXED PERSISTENT CANVAS BACKGROUND (z-index: 0)
+       NO overlay, NO vignette — footage stays true-color and clean.
+       ------------------------------------------------------------- */
+    #lookbook-bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      display: block;
+    }
+
+    /* -------------------------------------------------------------
+       2. FLOATING GLASS NAVIGATION BAR (fixed, z-index: 20)
+       ------------------------------------------------------------- */
+    .glass-nav-container {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(90vw, 1100px);
+      z-index: 20;
+      pointer-events: auto;
+    }
+
+    .glass-nav {
+      width: 100%;
+      padding: 16px 32px;
+      border-radius: 999px;
+      background: rgba(253, 248, 240, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .nav-logo {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #5C2D16;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: opacity 0.2s ease;
+    }
+
+    .nav-logo:hover {
+      opacity: 0.85;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: #5C2D16;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      position: relative;
+      padding: 4px 0;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a.active {
+      color: #C85A32;
+      font-weight: 600;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 1.5px;
+      background: #C85A32;
+      transition: width 0.25s ease;
+    }
+
+    .nav-links a:hover {
+      color: #C85A32;
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .cart-btn {
+      position: relative;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #5C2D16;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      border-radius: 50%;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .cart-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+      transform: scale(1.05);
+    }
+
+    .cart-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2;
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: #C85A32;
+      color: #FDF8F0;
+      font-size: 10px;
+      font-weight: 700;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    /* -------------------------------------------------------------
+       3. NORMAL-FLOW SCROLLING CONTAINER (z-index: 10)
+       ------------------------------------------------------------- */
+    #lookbook-page-content {
+      position: relative;
+      z-index: 10;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 120px;
+      padding-bottom: 140px;
+    }
+
+    /* Section 1: First Viewport */
+    .lookbook-hero-viewport {
+      min-height: 100vh;
+      position: relative;
+      pointer-events: none;
+    }
+
+    /* Small Glass Caption Chip (bottom: 6vh, right: 6vw) */
+    .caption-chip {
+      position: absolute;
+      bottom: 6vh;
+      right: 6vw;
+      padding: 10px 20px;
+      border-radius: 999px;
+      background: rgba(253, 248, 240, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #3D2418;
+      letter-spacing: 0.03em;
+      pointer-events: auto;
+      will-change: transform, opacity;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .caption-chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #C85A32;
+    }
+
+    /* Section 2: Editorial Header */
+    .gallery-intro {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 0 24px;
+    }
+
+    .gallery-eyebrow {
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-weight: 700;
+      color: #C85A32;
+      margin-bottom: 8px;
+    }
+
+    .gallery-heading {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(2rem, 3.5vw, 3.2rem);
+      font-weight: 600;
+      color: #3D2418;
+      line-height: 1.2;
+    }
+
+    .gallery-subheading {
+      margin-top: 12px;
+      font-size: 0.95rem;
+      color: rgba(61, 36, 24, 0.85);
+      font-weight: 300;
+      line-height: 1.6;
+    }
+
+    /* Section 3: Masonry-Style Gallery Grid */
+    .masonry-gallery {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 28px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 36px;
+      align-items: start;
+    }
+
+    /* Staggered Offset Layout for Masonry feel */
+    .gallery-item:nth-child(2) {
+      margin-top: 48px;
+    }
+    .gallery-item:nth-child(5) {
+      margin-top: 48px;
+    }
+    .gallery-item:nth-child(3) {
+      margin-top: 24px;
+    }
+    .gallery-item:nth-child(6) {
+      margin-top: 24px;
+    }
+
+    /* Glass-Bordered Frames (thin 1px whisper border, subtle blur only on hover) */
+    .glass-frame {
+      position: relative;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, backdrop-filter 0.4s ease, -webkit-backdrop-filter 0.4s ease, border-color 0.4s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px;
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Subtle backdrop-blur ONLY on hover for a soft highlight effect */
+    .glass-frame:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);
+      border-color: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* Dynamic Aspect Ratios */
+    .aspect-portrait {
+      aspect-ratio: 3 / 4;
+    }
+    .aspect-tall {
+      aspect-ratio: 2 / 3;
+    }
+    .aspect-classic {
+      aspect-ratio: 4 / 5;
+    }
+    .aspect-square {
+      aspect-ratio: 1 / 1;
+    }
+
+    /* Individual Card Editorial Background Themes */
+    .bg-card-1 {
+      background: linear-gradient(145deg, rgba(229, 178, 93, 0.75), rgba(222, 166, 141, 0.6));
+    }
+    .bg-card-2 {
+      background: linear-gradient(145deg, rgba(244, 194, 194, 0.75), rgba(253, 248, 240, 0.65));
+    }
+    .bg-card-3 {
+      background: linear-gradient(145deg, rgba(61, 36, 24, 0.75), rgba(139, 69, 32, 0.65));
+      color: #FDF8F0;
+    }
+    .bg-card-4 {
+      background: linear-gradient(145deg, rgba(229, 178, 93, 0.7), rgba(139, 69, 32, 0.6));
+    }
+    .bg-card-5 {
+      background: linear-gradient(145deg, rgba(222, 166, 141, 0.75), rgba(253, 248, 240, 0.65));
+    }
+    .bg-card-6 {
+      background: linear-gradient(145deg, rgba(244, 194, 194, 0.7), rgba(229, 178, 93, 0.65));
+    }
+
+    /* Card Badges and Content */
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 2;
+    }
+
+    .card-tag {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: rgba(253, 248, 240, 0.85);
+      color: #3D2418;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      letter-spacing: 0.02em;
+    }
+
+    .card-category {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+
+    .card-graphic {
+      margin: auto 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.22;
+      pointer-events: none;
+      transition: transform 0.5s ease;
+    }
+
+    .glass-frame:hover .card-graphic {
+      transform: scale(1.06);
+    }
+
+    .card-graphic svg {
+      width: 100px;
+      height: 100px;
+    }
+
+    .card-bottom {
+      z-index: 2;
+      background: rgba(253, 248, 240, 0.88);
+      padding: 16px 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      transition: background 0.3s ease;
+      color: #3D2418;
+    }
+
+    .glass-frame:hover .card-bottom {
+      background: rgba(253, 248, 240, 0.96);
+    }
+
+    .card-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #3D2418;
+      line-height: 1.25;
+    }
+
+    .card-desc {
+      font-size: 0.8rem;
+      color: rgba(61, 36, 24, 0.8);
+      margin-top: 4px;
+      line-height: 1.5;
+      font-weight: 300;
+    }
+
+    /* Section 4: Bottom Banner */
+    .lookbook-banner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 44px 48px;
+      border-radius: 28px;
+      background: rgba(253, 248, 240, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .lookbook-banner h3 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.7rem, 2.5vw, 2.3rem);
+      color: #3D2418;
+      font-weight: 600;
+    }
+
+    .lookbook-banner p {
+      font-size: 0.95rem;
+      color: rgba(61, 36, 24, 0.85);
+      line-height: 1.6;
+      max-width: 580px;
+    }
+
+    .banner-btn {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #C85A32;
+      color: #FDF8F0;
+      padding: 14px 28px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: background 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 4px 18px rgba(200, 90, 50, 0.25);
+    }
+
+    .banner-btn:hover {
+      background: #B34B25;
+      transform: translateY(-2px);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .masonry-gallery {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 28px;
+      }
+      .gallery-item:nth-child(2),
+      .gallery-item:nth-child(4),
+      .gallery-item:nth-child(6) {
+        margin-top: 32px;
+      }
+      .gallery-item:nth-child(3),
+      .gallery-item:nth-child(5) {
+        margin-top: 0;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .masonry-gallery {
+        grid-template-columns: 1fr;
+      }
+      .gallery-item:nth-child(n) {
+        margin-top: 0;
+      }
+      .nav-links {
+        display: none;
+      }
+      .lookbook-banner {
+        padding: 32px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. FIXED PERSISTENT CANVAS BACKGROUND (z-0, true-color, no overlay) -->
+  <canvas id="lookbook-bg-canvas"></canvas>
+
+  <!-- 2. FLOATING GLASS NAVIGATION BAR (fixed, z-20) -->
+  <header class="glass-nav-container">
+    <nav class="glass-nav" id="glass-nav">
+      <a href="/hero.html" class="nav-logo">chhapa</a>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="/hero.html#shop">Shop</a></li>
+          <li><a href="/craft.html">Craft</a></li>
+          <li><a href="/lookbook.html" class="active">Lookbook</a></li>
+          <li><a href="#login">Login</a></li>
+        </ul>
+        <button class="cart-btn" aria-label="Shopping Cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          <span class="cart-badge">2</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- 3. NORMAL-FLOW SCROLLING CONTAINER (z-10, transparent) -->
+  <div id="lookbook-page-content">
+
+    <!-- Section A: First Viewport with Floating Caption Chip -->
+    <section class="lookbook-hero-viewport">
+      <div class="caption-chip" id="caption-chip">
+        <span class="caption-chip-dot"></span>
+        <span>The Mustard Two-Piece</span>
+      </div>
+    </section>
+
+    <!-- Section B: Gallery Title & Intro -->
+    <section class="gallery-intro">
+      <span class="gallery-eyebrow">EDITORIAL ARCHIVE</span>
+      <h1 class="gallery-heading">Worn by Women, Cherished by Children</h1>
+      <p class="gallery-subheading">
+        Captured in open courtyard sunlight, celebrating natural dyes, flowing organic cotton, and the effortless grace of slow living.
+      </p>
+    </section>
+
+    <!-- Section C: Masonry Gallery Grid -->
+    <section class="masonry-gallery">
+
+      <!-- Item 1: Women's Mustard Set -->
+      <div class="gallery-item">
+        <div class="glass-frame aspect-portrait bg-card-1">
+          <div class="card-top">
+            <span class="card-tag">Handspun Cotton</span>
+            <span class="card-category">Women's Edit</span>
+          </div>
+          <div class="card-graphic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#3D2418" stroke-width="1.2">
+              <path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z"></path>
+            </svg>
+          </div>
+          <div class="card-bottom">
+            <h3 class="card-title">The Mustard Co-ord Set</h3>
+            <p class="card-desc">Sun-drenched mustard crop and relaxed trousers with wood-stamped flora.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 2: Kids' Frock -->
+      <div class="gallery-item">
+        <div class="glass-frame aspect-classic bg-card-2">
+          <div class="card-top">
+            <span class="card-tag">Mineral Terracotta</span>
+            <span class="card-category">Kids' Craft</span>
+          </div>
+          <div class="card-graphic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#3D2418" stroke-width="1.2">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M8 12h8"></path>
+              <path d="M12 8v8"></path>
+            </svg>
+          </div>
+          <div class="card-bottom">
+            <h3 class="card-title">Little Chhapa Dabu Frock</h3>
+            <p class="card-desc">Soft river-washed mud resist frock tailored for gentle toddler skin.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 3: Women's Indigo Overlay -->
+      <div class="gallery-item">
+        <div class="glass-frame aspect-tall bg-card-3">
+          <div class="card-top">
+            <span class="card-tag">Living Indigo</span>
+            <span class="card-category">Women's Edit</span>
+          </div>
+          <div class="card-graphic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FDF8F0" stroke-width="1.2">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+            </svg>
+          </div>
+          <div class="card-bottom">
+            <h3 class="card-title">Indigo Overlay Jacket &amp; Tunic</h3>
+            <p class="card-desc">Deep botanical indigo overlay paired with ivory organic handspun linen.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 4: Kids' Ajrakh Vest -->
+      <div class="gallery-item">
+        <div class="glass-frame aspect-portrait bg-card-4">
+          <div class="card-top">
+            <span class="card-tag">100% Natural Dye</span>
+            <span class="card-category">Kids' Craft</span>
+          </div>
+          <div class="card-graphic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#3D2418" stroke-width="1.2">
+              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+              <path d="M9 9h6v6H9z"></path>
+            </svg>
+          </div>
+          <div class="card-bottom">
+            <h3 class="card-title">Junior Ajrakh Nehru Vest</h3>
+            <p class="card-desc">Quilted blockprint vest with carved coconut shell button accents.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 5: Women's Bagh Maxi -->
+      <div class="gallery-item">
+        <div class="glass-frame aspect-classic bg-card-5">
+          <div class="card-top">
+            <span class="card-tag">Artisan Blockprint</span>
+            <span class="card-category">Women's Edit</span>
+          </div>
+          <div class="card-graphic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#3D2418" stroke-width="1.2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <div class="card-bottom">
+            <h3 class="card-title">Bagh Floral Tiered Maxi</h3>
+            <p class="card-desc">Flowing multi-tiered silhouette printed with red alum and harda bark.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 6: Sibling Harmony Sets -->
+      <div class="gallery-item">
+        <div class="glass-frame aspect-square bg-card-6">
+          <div class="card-top">
+            <span class="card-tag">Family Edit</span>
+            <span class="card-category">Handcrafted Together</span>
+          </div>
+          <div class="card-graphic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#3D2418" stroke-width="1.2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </div>
+          <div class="card-bottom">
+            <h3 class="card-title">Sibling Harmony Sets</h3>
+            <p class="card-desc">Coordinated slow-fashion silhouettes crafted for mindful celebration.</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Section D: Closing Banner -->
+    <section style="padding: 0 24px;">
+      <div class="lookbook-banner">
+        <span class="gallery-eyebrow">THE LIVING COLLECTION</span>
+        <h3>Bring Heritage Textiles into Your Everyday Wardrobe</h3>
+        <p>
+          Each piece is uniquely imprinted with natural mineral dyes and artisan hand blocks. Experience garments made with intention, care, and breathable comfort.
+        </p>
+        <a href="/hero.html#shop" class="banner-btn">
+          Shop the Lookbook
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- CDN scripts: GSAP, ScrollTrigger, Lenis -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
+
+  <!-- Lookbook Scroll Scrub Script -->
+  <script src="/lookbook-scroll.js"></script>
+</body>
+</html>

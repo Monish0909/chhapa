@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Craft — chhapa</title>
+
+  <!-- Google Fonts: Playfair Display (Refined Serif) & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* -------------------------------------------------------------
+       RESET & BASE STYLES
+       ------------------------------------------------------------- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      background-color: #140A05;
+      color: #3D2418;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    ::selection {
+      background: #C85A32;
+      color: #FDF8F0;
+    }
+
+    /* -------------------------------------------------------------
+       1. FIXED PERSISTENT CANVAS BACKGROUND (z-index: 0)
+       ------------------------------------------------------------- */
+    #craft-bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      display: block;
+    }
+
+    /* -------------------------------------------------------------
+       2. NEUTRAL VIGNETTE OVERLAY (z-index: 1)
+       ------------------------------------------------------------- */
+    .craft-vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(20,10,5,0.35) 100%);
+    }
+
+    /* -------------------------------------------------------------
+       3. FLOATING GLASS NAVIGATION BAR (fixed, z-index: 20)
+       ------------------------------------------------------------- */
+    .glass-nav-container {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(90vw, 1100px);
+      z-index: 20;
+      pointer-events: auto;
+    }
+
+    .glass-nav {
+      width: 100%;
+      padding: 16px 32px;
+      border-radius: 999px;
+      background: rgba(253, 248, 240, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .nav-logo {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #5C2D16;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: opacity 0.2s ease;
+    }
+
+    .nav-logo:hover {
+      opacity: 0.85;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: #5C2D16;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      position: relative;
+      padding: 4px 0;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a.active {
+      color: #C85A32;
+      font-weight: 600;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 1.5px;
+      background: #C85A32;
+      transition: width 0.25s ease;
+    }
+
+    .nav-links a:hover {
+      color: #C85A32;
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .cart-btn {
+      position: relative;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #5C2D16;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      border-radius: 50%;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .cart-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+      transform: scale(1.05);
+    }
+
+    .cart-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2;
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: #C85A32;
+      color: #FDF8F0;
+      font-size: 10px;
+      font-weight: 700;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    /* -------------------------------------------------------------
+       4. NORMAL-FLOW SCROLLING CONTAINER (z-index: 10)
+       ------------------------------------------------------------- */
+    #craft-page-content {
+      position: relative;
+      z-index: 10;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 120px;
+      padding-bottom: 120px;
+    }
+
+    /* Section 1: First Viewport */
+    .hero-viewport {
+      min-height: 100vh;
+      position: relative;
+      pointer-events: none;
+    }
+
+    /* Bottom-Left Glass Panel */
+    .hero-glass-panel {
+      position: absolute;
+      bottom: 8vh;
+      left: 6vw;
+      max-width: 480px;
+      width: calc(100vw - 12vw);
+      padding: 28px 36px;
+      border-radius: 20px;
+      background: rgba(253, 248, 240, 0.6);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      pointer-events: auto;
+      will-change: transform, opacity;
+    }
+
+    .eyebrow {
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #8B4520;
+      margin-bottom: 8px;
+    }
+
+    .hero-heading {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(2rem, 3.8vw, 3rem);
+      font-weight: 600;
+      color: #3D2418;
+      line-height: 1.15;
+    }
+
+    .hero-desc {
+      margin-top: 14px;
+      font-size: 0.95rem;
+      color: rgba(61, 36, 24, 0.85);
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    /* Section 2: Alternating Rows */
+    .craft-rows-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 90px;
+    }
+
+    .craft-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .craft-row.reverse .row-glass-card {
+      order: 2;
+    }
+
+    .craft-row.reverse .row-photo {
+      order: 1;
+    }
+
+    /* Glass Card */
+    .row-glass-card {
+      padding: 40px 48px;
+      border-radius: 24px;
+      background: rgba(253, 248, 240, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .row-step {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 700;
+      color: #C85A32;
+    }
+
+    .row-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.6rem, 2.2vw, 2.2rem);
+      font-weight: 600;
+      color: #3D2418;
+      line-height: 1.25;
+    }
+
+    .row-subtitle {
+      font-size: 0.9rem;
+      color: #8B4520;
+      font-weight: 500;
+      margin-top: -8px;
+    }
+
+    .row-desc {
+      font-size: 0.95rem;
+      color: rgba(61, 36, 24, 0.85);
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    .row-details {
+      margin-top: 8px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(139, 69, 32, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      list-style: none;
+    }
+
+    .row-details li {
+      font-size: 0.85rem;
+      color: #3D2418;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .row-details li::before {
+      content: '◆';
+      color: #C85A32;
+      font-size: 0.65rem;
+    }
+
+    /* Normal Photography Card (Not Glass) */
+    .row-photo {
+      border-radius: 24px;
+      overflow: hidden;
+      aspect-ratio: 4 / 3.2;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      background: linear-gradient(135deg, #3D2418 0%, #1A0E08 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 28px;
+    }
+
+    .photo-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0) 100%);
+      z-index: 1;
+    }
+
+    .photo-art {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.18;
+    }
+
+    .photo-art svg {
+      width: 140px;
+      height: 140px;
+      stroke: #FDF8F0;
+    }
+
+    .photo-info {
+      position: relative;
+      z-index: 2;
+    }
+
+    .photo-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #D4AF37;
+      font-weight: 600;
+    }
+
+    .photo-caption {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.15rem;
+      color: #FDF8F0;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    /* Section 3: Closing Callout */
+    .craft-closing-section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+      width: 100%;
+    }
+
+    .closing-glass-card {
+      padding: 48px 56px;
+      border-radius: 28px;
+      background: rgba(253, 248, 240, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .closing-glass-card h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.8rem, 2.8vw, 2.5rem);
+      color: #3D2418;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    .closing-glass-card p {
+      font-size: 0.95rem;
+      color: rgba(61, 36, 24, 0.85);
+      line-height: 1.7;
+      max-width: 600px;
+    }
+
+    .cta-button {
+      margin-top: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #C85A32;
+      color: #FDF8F0;
+      padding: 14px 28px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      transition: background 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 4px 20px rgba(200, 90, 50, 0.25);
+    }
+
+    .cta-button:hover {
+      background: #B34B25;
+      transform: translateY(-2px);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .craft-row {
+        grid-template-columns: 1fr;
+      }
+      .craft-row.reverse .row-glass-card {
+        order: 1;
+      }
+      .craft-row.reverse .row-photo {
+        order: 2;
+      }
+      .row-glass-card {
+        padding: 32px 28px;
+      }
+      .closing-glass-card {
+        padding: 36px 28px;
+      }
+      .nav-links {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. FIXED PERSISTENT CANVAS BACKGROUND (z-0) -->
+  <canvas id="craft-bg-canvas"></canvas>
+
+  <!-- 2. NEUTRAL VIGNETTE OVERLAY (z-1) -->
+  <div class="craft-vignette"></div>
+
+  <!-- 3. FLOATING GLASS NAVIGATION BAR (z-20) -->
+  <header class="glass-nav-container">
+    <nav class="glass-nav" id="glass-nav">
+      <a href="/hero.html" class="nav-logo">chhapa</a>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="/hero.html#shop">Shop</a></li>
+          <li><a href="/craft.html" class="active">Craft</a></li>
+          <li><a href="#lookbook">Lookbook</a></li>
+          <li><a href="#login">Login</a></li>
+        </ul>
+        <button class="cart-btn" aria-label="Shopping Cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          <span class="cart-badge">2</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- 4. NORMAL-FLOW SCROLLING CONTAINER (z-10, transparent) -->
+  <div id="craft-page-content">
+
+    <!-- Section A: First Viewport Hero Panel -->
+    <section class="hero-viewport">
+      <div class="hero-glass-panel" id="first-viewport-panel">
+        <span class="eyebrow">OUR CRAFT</span>
+        <h1 class="hero-heading">Every stroke, done by hand.</h1>
+        <p class="hero-desc">
+          Centuries-old botanical vat fermentation and teak woodblock carving passed down through generational artisan guilds.
+        </p>
+      </div>
+    </section>
+
+    <!-- Section B: Alternating Image/Text Glass-Panel Rows -->
+    <section class="craft-rows-container">
+
+      <!-- Row 1: Woodblock Carving -->
+      <div class="craft-row">
+        <div class="row-glass-card">
+          <span class="row-step">Stage 01</span>
+          <h2 class="row-title">Hand-Chiseled Sheesham Wood Blocks</h2>
+          <span class="row-subtitle">The Blueprint of Heritage Motifs</span>
+          <p class="row-desc">
+            Every collection begins in the artisan workshops of Jaipur and Kutch, where master wood carvers chisel intricate floral, geometric, and jali motifs into seasoned teak or sheesham wood. A single block requires up to seven days of rhythmic chisel work, with specialized air escape holes drilled to ensure crisp dye release onto organic fibers.
+          </p>
+          <ul class="row-details">
+            <li>Rekh (Outline Block) carved first to define boundaries</li>
+            <li>Gad (Background Filler) carved with dense relief depth</li>
+            <li>Datta (Accent Fill) aligned with pinpoint registration points</li>
+          </ul>
+        </div>
+        <div class="row-photo">
+          <div class="photo-overlay"></div>
+          <div class="photo-art">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.2">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
+          </div>
+          <div class="photo-info">
+            <span class="photo-label">Master Artisan Workshop</span>
+            <p class="photo-caption">Carving seasoned teak block in Jaipur</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Botanical Dyes (Reversed) -->
+      <div class="craft-row reverse">
+        <div class="row-glass-card">
+          <span class="row-step">Stage 02</span>
+          <h2 class="row-title">Botanical Fermentation & Living Indigo Vats</h2>
+          <span class="row-subtitle">Extracting Color from Earth and Flora</span>
+          <p class="row-desc">
+            We reject petrochemical dyes in favor of living, organic fermentation. Indigo leaves ferment for weeks in earthen subterranean vats with jaggery, lime, and natural enzymes. Harda (myrobalan seed powder) prepares raw cotton fibers, while pomegranate rinds, madder roots, and crushed turmeric yield rich terracotta, golden mustard, and blush tones.
+          </p>
+          <ul class="row-details">
+            <li>Zero synthetic fixatives or caustic soda</li>
+            <li>Living bio-fermented subterranean natural indigo vats</li>
+            <li>Pomegranate rind, madder root &amp; mineral rust dyes</li>
+          </ul>
+        </div>
+        <div class="row-photo">
+          <div class="photo-overlay"></div>
+          <div class="photo-art">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.2">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+            </svg>
+          </div>
+          <div class="photo-info">
+            <span class="photo-label">Fermentation Vat</span>
+            <p class="photo-caption">Earthen subterranean natural indigo extraction</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Hand Stamping -->
+      <div class="craft-row">
+        <div class="row-glass-card">
+          <span class="row-step">Stage 03</span>
+          <h2 class="row-title">The Meditative Rhythm of Block Stamping</h2>
+          <span class="row-subtitle">Patience, Pressure, and Hand Registration</span>
+          <p class="row-desc">
+            Printing is performed on long padded tables covered in damp sand and layers of jute. The master printer dips the carved block into a sieve resting in a wooden dye tray, positions it by eye with millimeter precision, and strikes the block with the heel of the hand. An average garment demands over 400 individual strikes.
+          </p>
+          <ul class="row-details">
+            <li>Hand-felted registration by master artisans</li>
+            <li>Subtle variations in pigment depth proving authentic handcraft</li>
+            <li>Layered multi-color stamping with precise drying intervals</li>
+          </ul>
+        </div>
+        <div class="row-photo">
+          <div class="photo-overlay"></div>
+          <div class="photo-art">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="9" y1="21" x2="9" y2="9"></line>
+            </svg>
+          </div>
+          <div class="photo-info">
+            <span class="photo-label">Handcraft Studio</span>
+            <p class="photo-caption">Hand-stamping natural dyes on organic cotton</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: River Washing & Sun Curing (Reversed) -->
+      <div class="craft-row reverse">
+        <div class="row-glass-card">
+          <span class="row-step">Stage 04</span>
+          <h2 class="row-title">River Washing & Open-Sky Sunlight Curing</h2>
+          <span class="row-subtitle">Set by the Sun, Cleansed by Running Waters</span>
+          <p class="row-desc">
+            Once printed and dried, fabrics are washed in running natural streams to remove excess loose sediment and mud resist paste without degrading fiber integrity. They are then spread across vast riverbanks under direct sunlight, where heat and UV rays react with the botanical minerals to fix the colors permanently.
+          </p>
+          <ul class="row-details">
+            <li>Natural sun oxidation developing rich indigo depth</li>
+            <li>Gentle river current washing preserving textile hand-feel</li>
+            <li>Recycled water irrigation nourishing surrounding flora</li>
+          </ul>
+        </div>
+        <div class="row-photo">
+          <div class="photo-overlay"></div>
+          <div class="photo-art">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.2">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+          </div>
+          <div class="photo-info">
+            <span class="photo-label">Open-Air Curing</span>
+            <p class="photo-caption">Riverbank sun drying in Rajasthan</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Section C: Closing Glass Philosophy Card -->
+    <section class="craft-closing-section">
+      <div class="closing-glass-card">
+        <span class="eyebrow">ETHICAL HERITAGE</span>
+        <h2>Preserving Living Indian Artistry for Future Generations</h2>
+        <p>
+          By choosing slow handcrafted block prints, you directly support multi-generational artisan families and keep ancient sustainable dyeing traditions thriving.
+        </p>
+        <a href="/hero.html#shop" class="cta-button">
+          Explore Our Collection
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- CDN scripts: GSAP, ScrollTrigger, Lenis -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
+
+  <!-- Craft Scroll Scrub Script -->
+  <script src="/craft-scroll.js"></script>
+</body>
+</html>
