@@ -4,6 +4,7 @@ export interface StaggeredMenuItem {
   label: string;
   link: string;
   ariaLabel?: string;
+  badge?: number | string | null;
 }
 
 export interface StaggeredMenuSocialItem {

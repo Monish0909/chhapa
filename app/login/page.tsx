@@ -132,15 +132,20 @@ export default function LoginPage() {
             {/* Subtle Inner Highlight Catching Light at the Top Edge of Glass Card */}
             <div className="glass-inner-highlight" />
 
-            {/* Top Brand Wordmark / Emblem */}
-            <div className="text-center mb-7">
+            {/* Top Brand Logo / Emblem */}
+            <div className="text-center mb-6 flex flex-col items-center">
               <Link
                 href="/"
-                className="inline-block font-serif text-3xl sm:text-4xl tracking-wider text-terracotta-dark font-semibold hover:opacity-90 transition-opacity"
+                className="inline-flex flex-col items-center hover:opacity-90 transition-opacity group"
+                aria-label="chhapa - Return to Home"
               >
-                chhapa
+                <img
+                  src="/logo.png"
+                  alt="chhapa"
+                  className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-105"
+                />
               </Link>
-              <div className="flex items-center justify-center space-x-2 text-[10px] uppercase tracking-widest text-terracotta-600 mt-1.5 font-medium">
+              <div className="flex items-center justify-center space-x-2 text-[10px] uppercase tracking-widest text-terracotta-600 mt-2.5 font-medium">
                 <Sparkles className="w-3 h-3 text-gold" />
                 <span>Handcrafted Slow Living</span>
                 <Sparkles className="w-3 h-3 text-gold" />

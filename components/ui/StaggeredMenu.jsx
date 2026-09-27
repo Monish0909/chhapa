@@ -457,8 +457,13 @@ export const StaggeredMenu = ({
                       aria-label={it.ariaLabel}
                       data-index={idx + 1}
                     >
-                      <span className="sm-panel-itemLabel inline-block [transform-origin:50%_100%] will-change-transform">
-                        {it.label}
+                      <span className="sm-panel-itemLabel inline-flex items-center gap-2.5 [transform-origin:50%_100%] will-change-transform">
+                        <span>{it.label}</span>
+                        {it.badge !== undefined && it.badge !== null && it.badge !== 0 && it.badge !== '0' && (
+                          <span className="sm-panel-item-badge inline-flex items-center justify-center text-xs font-sans font-bold bg-[#8B4520] text-[#FDF8F0] min-w-[22px] h-[22px] px-1.5 rounded-full leading-none tracking-normal align-middle shadow-sm">
+                            {it.badge}
+                          </span>
+                        )}
                       </span>
                     </a>
                   </li>
@@ -505,7 +510,7 @@ export const StaggeredMenu = ({
 .sm-scope .staggered-menu-header { position: absolute; top: 0; left: 0; width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; background: transparent; pointer-events: none; z-index: 20; }
 .sm-scope .staggered-menu-header > * { pointer-events: auto; }
 .sm-scope .sm-logo { display: flex; align-items: center; user-select: none; }
-.sm-scope .sm-logo-img { display: block; height: 32px; width: auto; object-fit: contain; }
+.sm-scope .sm-logo-img { display: block; height: 36px; width: 36px; object-fit: contain; }
 .sm-scope .sm-toggle { position: relative; display: inline-flex; align-items: center; gap: 0.3rem; background: transparent; border: none; cursor: pointer; font-weight: 500; line-height: 1; overflow: visible; font-family: var(--font-sans, sans-serif); letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.85rem; }
 .sm-scope .sm-toggle:focus-visible { outline: 2px solid #8B452055; outline-offset: 4px; border-radius: 4px; }
 .sm-scope .sm-toggle-textWrap { position: relative; margin-right: 0.5em; display: inline-block; height: 1em; overflow: hidden; white-space: nowrap; width: var(--sm-toggle-width, auto); min-width: var(--sm-toggle-width, auto); }

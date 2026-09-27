@@ -54,11 +54,17 @@ export function GlassNav() {
       : { name: 'Login', href: '/login' },
   ];
 
-  // Mobile Nav items with reactive auth state
+  // Mobile Nav items with reactive auth state and live cart count
   const mobileNavItems = [
     { label: 'Shop', link: '/shop', ariaLabel: 'Shop Handcrafted Silhouettes' },
     { label: 'Our Craft', link: '/craft', ariaLabel: 'Our Botanical Craft Heritage' },
     { label: 'Lookbook', link: '/lookbook', ariaLabel: 'Editorial Lookbook' },
+    {
+      label: 'Cart',
+      link: '/cart',
+      ariaLabel: `Shopping Cart, ${totalItems} item${totalItems === 1 ? '' : 's'}`,
+      badge: isMounted && totalItems > 0 ? totalItems : null,
+    },
     isAuthenticated
       ? { label: 'Account', link: '/account', ariaLabel: 'Patron Account' }
       : { label: 'Login', link: '/login', ariaLabel: 'Customer Login' },
@@ -94,7 +100,7 @@ export function GlassNav() {
           openMenuButtonColor="#3d2418"
           displayItemNumbering={true}
           closeOnClickAway={true}
-          logoUrl="/chhapa-logo.svg"
+          logoUrl="/logo.png"
           isFixed={true}
           items={mobileNavItems}
           socialItems={socialLinks}
@@ -107,7 +113,7 @@ export function GlassNav() {
       {/* Desktop Floating Glass Navigation Bar (>= 768px only) */}
       <header className="hidden md:block fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-30 w-[min(94vw,1100px)] pointer-events-none">
         <nav
-          className={`pointer-events-auto w-full px-5 sm:px-8 py-3 sm:py-4 rounded-full flex items-center justify-between transition-all duration-300 ${
+          className={`pointer-events-auto w-full px-5 sm:px-8 py-2.5 sm:py-3 rounded-full flex items-center justify-between transition-all duration-300 ${
             isScrolled ? 'glass-nav-scrolled' : 'glass-effect'
           }`}
           style={{
@@ -121,9 +127,14 @@ export function GlassNav() {
           {/* Brand / Logo */}
           <Link
             href="/"
-            className="font-serif text-2xl sm:text-3xl tracking-wider text-terracotta-dark font-semibold hover:opacity-90 transition-opacity min-h-[44px] flex items-center"
+            className="hover:opacity-90 transition-opacity min-h-[44px] flex items-center group py-0.5"
+            aria-label="chhapa - Return to Home"
           >
-            chhapa
+            <img
+              src="/logo.png"
+              alt="chhapa"
+              className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+            />
           </Link>
 
           {/* Desktop Links (Hidden below 768px, desktop floating glass nav bar remains unchanged) */}

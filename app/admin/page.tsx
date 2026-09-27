@@ -1,18 +1,80 @@
-// Admin section password-protected via /middleware.ts and ADMIN_PASSWORD in .env.local
+'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Package, ShoppingCart, ArrowRight, Clock, Plus } from 'lucide-react';
-import { mockProducts } from '@/lib/mockProducts';
+import { supabase } from '@/lib/supabase';
+import { getProducts, MockProduct } from '@/lib/products';
+
+interface RecentOrder {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  itemsSummary: string;
+  status: string;
+}
 
 export default function AdminDashboardPage() {
-  const totalProducts = mockProducts.length;
-  const availableProducts = mockProducts.filter((p) => !p.sold).length;
-  const soldProducts = mockProducts.filter((p) => p.sold).length;
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<MockProduct[]>([]);
+  const [totalOrders, setTotalOrders] = useState<number>(0);
+  const [pendingOrders, setPendingOrders] = useState<number>(0);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
 
-  // Placeholder metrics
-  const totalOrders = 8;
-  const pendingOrders = 3;
+  useEffect(() => {
+    async function loadDashboardData() {
+      setLoading(true);
+      try {
+        // Fetch products
+        const fetchedProducts = await getProducts();
+        setProducts(fetchedProducts);
+
+        // Fetch orders
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!ordersError && ordersData) {
+          setTotalOrders(ordersData.length);
+          const pending = ordersData.filter((o: { status?: string }) => {
+            const s = (o.status || '').toLowerCase();
+            return s.includes('pending') || s.includes('awaiting') || s.includes('whatsapp');
+          }).length;
+          setPendingOrders(pending);
+
+          const formattedRecent: RecentOrder[] = ordersData.slice(0, 3).map((o: Record<string, unknown>) => {
+            let itemsSummary = 'Custom Order';
+            if (Array.isArray(o.items) && o.items.length > 0) {
+              itemsSummary = o.items
+                .map((it: { name?: string; productId?: string; size?: string }) =>
+                  `${it.name || it.productId || 'Item'}${it.size ? ` (${it.size})` : ''}`
+                )
+                .join(', ');
+            }
+            return {
+              id: String(o.id || ''),
+              orderNumber: `CHP-${String(o.id || '').slice(0, 6).toUpperCase()}`,
+              customerName: String(o.customer_name || 'Anonymous'),
+              itemsSummary,
+              status: String(o.status || 'Pending'),
+            };
+          });
+          setRecentOrders(formattedRecent);
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard metrics:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboardData();
+  }, []);
+
+  const totalProducts = products.length;
+  const availableProducts = products.filter((p) => !p.sold).length;
+  const soldProducts = products.filter((p) => p.sold).length;
 
   return (
     <div className="space-y-8">
@@ -37,9 +99,11 @@ export default function AdminDashboardPage() {
               </span>
               <Package className="w-4 h-4 text-slate-400" />
             </div>
-            <p className="text-3xl font-bold text-slate-900 mt-2">{totalProducts}</p>
+            <p className="text-3xl font-bold text-slate-900 mt-2">
+              {loading ? '—' : totalProducts}
+            </p>
             <p className="text-xs text-slate-500 mt-1">
-              {availableProducts} available · {soldProducts} sold
+              {loading ? 'Loading catalog...' : `${availableProducts} available · ${soldProducts} sold`}
             </p>
           </div>
           <div className="pt-4 mt-4 border-t border-slate-100">
@@ -62,8 +126,12 @@ export default function AdminDashboardPage() {
               </span>
               <ShoppingCart className="w-4 h-4 text-slate-400" />
             </div>
-            <p className="text-3xl font-bold text-slate-900 mt-2">{totalOrders}</p>
-            <p className="text-xs text-slate-500 mt-1">Placeholder count</p>
+            <p className="text-3xl font-bold text-slate-900 mt-2">
+              {loading ? '—' : totalOrders}
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              {loading ? 'Loading orders...' : `${totalOrders} orders recorded`}
+            </p>
           </div>
           <div className="pt-4 mt-4 border-t border-slate-100">
             <Link
@@ -85,7 +153,9 @@ export default function AdminDashboardPage() {
               </span>
               <Clock className="w-4 h-4 text-amber-500" />
             </div>
-            <p className="text-3xl font-bold text-amber-900 mt-2">{pendingOrders}</p>
+            <p className="text-3xl font-bold text-amber-900 mt-2">
+              {loading ? '—' : pendingOrders}
+            </p>
             <p className="text-xs text-slate-500 mt-1">
               UPI payment screenshots on WhatsApp
             </p>
@@ -145,26 +215,36 @@ export default function AdminDashboardPage() {
             </Link>
           </div>
           <div className="divide-y divide-slate-100 text-sm">
-            {mockProducts.slice(0, 3).map((product) => (
-              <div key={product.id} className="py-2.5 flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-slate-800">{product.name}</p>
-                  <p className="text-xs text-slate-500 capitalize">{product.category}</p>
+            {loading ? (
+              <p className="py-4 text-xs text-slate-400">Loading catalog...</p>
+            ) : products.length === 0 ? (
+              <p className="py-4 text-xs text-slate-500">
+                No products in database. Add a product to get started.
+              </p>
+            ) : (
+              products.slice(0, 3).map((product) => (
+                <div key={product.id} className="py-2.5 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-slate-800">{product.name}</p>
+                    <p className="text-xs text-slate-500 capitalize">{product.category}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-slate-900">
+                      ₹{product.price.toLocaleString('en-IN')}
+                    </p>
+                    <span
+                      className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded ${
+                        product.sold
+                          ? 'bg-slate-100 text-slate-600'
+                          : 'bg-emerald-50 text-emerald-700'
+                      }`}
+                    >
+                      {product.sold ? 'Sold' : 'Available'}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium text-slate-900">₹{product.price.toLocaleString('en-IN')}</p>
-                  <span
-                    className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded ${
-                      product.sold
-                        ? 'bg-slate-100 text-slate-600'
-                        : 'bg-emerald-50 text-emerald-700'
-                    }`}
-                  >
-                    {product.sold ? 'Sold' : 'Available'}
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -185,33 +265,27 @@ export default function AdminDashboardPage() {
             </Link>
           </div>
           <div className="divide-y divide-slate-100 text-sm">
-            <div className="py-2.5 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-slate-800">#CHP-829140 · Aarav Sharma</p>
-                <p className="text-xs text-slate-500">Hand-Painted Indigo Bloom Silk-Cotton Shirt</p>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                Awaiting WhatsApp
-              </span>
-            </div>
-            <div className="py-2.5 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-slate-800">#CHP-719342 · Priya Sen</p>
-                <p className="text-xs text-slate-500">Hand-Painted Mineral Terracotta Kurta</p>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                Payment Received
-              </span>
-            </div>
-            <div className="py-2.5 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-slate-800">#CHP-654129 · Meera Patel</p>
-                <p className="text-xs text-slate-500">Little Chhapa Quilted Play Vest</p>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Delivered
-              </span>
-            </div>
+            {loading ? (
+              <p className="py-4 text-xs text-slate-400">Loading recent orders...</p>
+            ) : recentOrders.length === 0 ? (
+              <p className="py-4 text-xs text-slate-500">
+                No orders recorded yet. Real customer orders will appear here.
+              </p>
+            ) : (
+              recentOrders.map((order) => (
+                <div key={order.id} className="py-2.5 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-slate-800">
+                      {order.orderNumber} · {order.customerName}
+                    </p>
+                    <p className="text-xs text-slate-500">{order.itemsSummary}</p>
+                  </div>
+                  <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                    {order.status}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

@@ -26,6 +26,14 @@ export const metadata: Metadata = {
   title: 'Chhapa — Artisanal Handcrafted Textiles & Apparel',
   description:
     'Discover timeless hand-painted sustainable silhouettes and artisanal heritage crafts curated for modern everyday living.',
+  icons: {
+    icon: [
+      { url: '/icon.png', sizes: '64x64', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({

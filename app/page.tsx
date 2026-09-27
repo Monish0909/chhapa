@@ -402,11 +402,17 @@ export default function HomePage() {
             boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
           }}
         >
+          {/* Brand / Logo */}
           <Link
             href="/"
-            className="font-serif text-2xl sm:text-3xl tracking-wider text-terracotta-dark font-semibold hover:opacity-90 transition-opacity min-h-[44px] flex items-center"
+            className="hover:opacity-90 transition-opacity min-h-[44px] flex items-center group py-0.5"
+            aria-label="chhapa - Return to Home"
           >
-            chhapa
+            <img
+              src="/logo.png"
+              alt="chhapa"
+              className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+            />
           </Link>
 
           <div className="flex items-center space-x-2 sm:space-x-8">
@@ -448,12 +454,18 @@ export default function HomePage() {
           openMenuButtonColor="#3d2418"
           displayItemNumbering={true}
           closeOnClickAway={true}
-          logoUrl="/chhapa-logo.svg"
+          logoUrl="/logo.png"
           isFixed={true}
           items={[
             { label: 'Shop', link: '/shop', ariaLabel: 'Shop Handcrafted Silhouettes' },
             { label: 'Our Craft', link: '/craft', ariaLabel: 'Our Craft Story' },
             { label: 'Lookbook', link: '/lookbook', ariaLabel: 'Lookbook' },
+            {
+              label: 'Cart',
+              link: '/cart',
+              ariaLabel: `Shopping Cart, ${totalItems} item${totalItems === 1 ? '' : 's'}`,
+              badge: isMounted && totalItems > 0 ? totalItems : null,
+            },
             isAuthenticated
               ? { label: 'Account', link: '/account', ariaLabel: 'Patron Account' }
               : { label: 'Login', link: '/login', ariaLabel: 'Customer Login' },
@@ -834,9 +846,16 @@ export default function HomePage() {
           >
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-terracotta/10">
               <div className="space-y-3 md:col-span-2">
-                <span className="font-serif text-2xl tracking-wider text-terracotta-dark font-bold">
-                  chhapa
-                </span>
+                <Link href="/" className="inline-flex items-center space-x-3 group" aria-label="chhapa - Return to Home">
+                  <img
+                    src="/logo.png"
+                    alt="chhapa"
+                    className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <span className="font-serif text-2xl tracking-wider text-terracotta-dark font-bold">
+                    chhapa
+                  </span>
+                </Link>
                 <p className="text-xs text-terracotta-dark/80 max-w-sm leading-relaxed">
                   Honoring the age-old heritage of Indian freehand hand-painting with natural dyes and slow ethical craftsmanship.
                 </p>

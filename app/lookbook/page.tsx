@@ -367,11 +367,17 @@ export default function LookbookPage() {
             boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
           }}
         >
+          {/* Brand / Logo */}
           <Link
             href="/"
-            className="font-serif text-2xl sm:text-3xl tracking-wider text-terracotta-dark font-semibold hover:opacity-90 transition-opacity min-h-[44px] flex items-center"
+            className="hover:opacity-90 transition-opacity min-h-[44px] flex items-center group py-0.5"
+            aria-label="chhapa - Return to Home"
           >
-            chhapa
+            <img
+              src="/logo.png"
+              alt="chhapa"
+              className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+            />
           </Link>
 
           <div className="flex items-center space-x-2 sm:space-x-8">
