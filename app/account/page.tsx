@@ -17,7 +17,10 @@ import {
   Sparkles,
   LogOut,
   Clock,
+  Loader2,
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface MockAccountOrder {
   id: string;
@@ -47,7 +50,7 @@ const initialOrders: MockAccountOrder[] = [
   {
     id: 'ord-1',
     orderNumber: 'CHP-829140',
-    itemName: 'Ajrakh Natural Indigo Shirt',
+    itemName: 'Hand-Painted Indigo Bloom Silk-Cotton Shirt',
     size: 'M',
     date: 'Sep 24, 2026',
     price: 3499,
@@ -56,7 +59,7 @@ const initialOrders: MockAccountOrder[] = [
   {
     id: 'ord-2',
     orderNumber: 'CHP-719342',
-    itemName: 'Bagru Mud-Resist Mineral Kurta',
+    itemName: 'Hand-Painted Mineral Terracotta Kurta',
     size: 'S',
     date: 'Aug 18, 2026',
     price: 4199,
@@ -67,29 +70,21 @@ const initialOrders: MockAccountOrder[] = [
 export default function AccountPage() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+  const [currentUser, setCurrentUser] = useState<SupabaseUser | null>(null);
+
   const [userProfile, setUserProfile] = useState({
-    fullName: 'Monish Sharma',
-    email: 'monish@example.com',
+    fullName: '',
+    email: '',
     phone: '+91 98765 43210',
     memberTier: 'Patron Member',
   });
 
   const [orders] = useState<MockAccountOrder[]>(initialOrders);
-  const [addresses, setAddresses] = useState<SavedAddress[]>([
-    {
-      id: 'addr-1',
-      title: 'Home',
-      isDefault: true,
-      recipientName: 'Monish Sharma',
-      phone: '+91 98765 43210',
-      line1: '102 Heritage Enclave, Civil Lines',
-      city: 'Jaipur',
-      state: 'Rajasthan',
-      pincode: '302006',
-    },
-  ]);
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
 
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [newAddress, setNewAddress] = useState({
     title: 'Studio',
     recipientName: '',
@@ -103,73 +98,205 @@ export default function AccountPage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
 
+  // Check Supabase session on mount
   useEffect(() => {
-    setIsMounted(true);
-    try {
-      const storedName = localStorage.getItem('chhapa_user_name');
-      const storedEmail = localStorage.getItem('chhapa_user_email');
-      if (storedName || storedEmail) {
-        setUserProfile((prev) => ({
-          ...prev,
-          fullName: storedName || prev.fullName,
-          email: storedEmail || prev.email,
-        }));
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
+    let isSubscribed = true;
 
-  const handleLogout = () => {
-    try {
-      localStorage.setItem('chhapa_user', 'false');
-    } catch {
-      // ignore
+    async function checkAuthAndLoadData() {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session || !session.user) {
+          router.push('/login');
+          return;
+        }
+
+        if (isSubscribed) {
+          const user = session.user;
+          setCurrentUser(user);
+
+          const fullNameFromMeta =
+            (user.user_metadata?.full_name as string) ||
+            (user.email ? user.email.split('@')[0] : 'Patron');
+
+          setUserProfile((prev) => ({
+            ...prev,
+            email: user.email || '',
+            fullName: fullNameFromMeta,
+          }));
+
+          setIsMounted(true);
+        }
+
+        // Fetch addresses from customer_addresses table for this user
+        if (session.user) {
+          setIsLoadingAddresses(true);
+          const { data: addrData, error: addrError } = await supabase
+            .from('customer_addresses')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false });
+
+          if (addrError) {
+            console.warn('[Supabase Addresses] Fetch note:', addrError.message);
+          } else if (addrData && isSubscribed) {
+            const formatted: SavedAddress[] = addrData.map((row) => ({
+              id: row.id,
+              title: row.title || 'Home',
+              isDefault: Boolean(row.is_default),
+              recipientName: row.recipient_name || '',
+              phone: row.phone || '',
+              line1: row.address_line1 || '',
+              line2: row.address_line2 || '',
+              city: row.city || '',
+              state: row.state || '',
+              pincode: row.pincode || '',
+            }));
+            setAddresses(formatted);
+          }
+          setIsLoadingAddresses(false);
+        }
+      } catch (err) {
+        console.error('[Account] Auth check exception:', err);
+        router.push('/login');
+      }
     }
-    router.push('/login');
+
+    checkAuthAndLoadData();
+
+    // Listen to real-time auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session && isSubscribed) {
+        router.push('/login');
+      }
+    });
+
+    return () => {
+      isSubscribed = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('[Account] Signout error:', err);
+    }
+    router.push('/');
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingProfile(true);
-    setTimeout(() => {
-      setIsSavingProfile(false);
-      setProfileSaved(true);
-      try {
-        localStorage.setItem('chhapa_user_name', userProfile.fullName);
-        localStorage.setItem('chhapa_user_email', userProfile.email);
-      } catch {
-        // ignore
+
+    try {
+      if (currentUser) {
+        await supabase.auth.updateUser({
+          data: {
+            full_name: userProfile.fullName,
+          },
+        });
       }
+      setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 2400);
-    }, 400);
+    } catch (err) {
+      console.error('[Account] Profile update error:', err);
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
-  const handleAddAddressSubmit = (e: React.FormEvent) => {
+  const handleAddAddressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAddress.line1 || !newAddress.city) return;
-    const added: SavedAddress = {
-      id: `addr-${Date.now()}`,
-      title: newAddress.title || 'Other',
-      isDefault: addresses.length === 0,
-      recipientName: newAddress.recipientName || userProfile.fullName,
-      phone: newAddress.phone || userProfile.phone,
-      line1: newAddress.line1,
-      city: newAddress.city,
-      state: newAddress.state,
-      pincode: newAddress.pincode,
-    };
-    setAddresses((curr) => [...curr, added]);
-    setIsAddingAddress(false);
-    setNewAddress({
-      title: 'Studio',
-      recipientName: '',
-      phone: '',
-      line1: '',
-      city: '',
-      state: 'Rajasthan',
-      pincode: '',
-    });
+
+    setIsSavingAddress(true);
+
+    const isFirstAddress = addresses.length === 0;
+
+    try {
+      if (currentUser?.id) {
+        const { data, error } = await supabase
+          .from('customer_addresses')
+          .insert({
+            user_id: currentUser.id,
+            title: newAddress.title || 'Home',
+            recipient_name: newAddress.recipientName || userProfile.fullName,
+            phone: newAddress.phone || userProfile.phone,
+            address_line1: newAddress.line1,
+            city: newAddress.city,
+            state: newAddress.state,
+            pincode: newAddress.pincode,
+            is_default: isFirstAddress,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.warn('[Supabase Addresses] Insert note:', error.message);
+          // Fallback to local state if table not created yet in user project
+          const added: SavedAddress = {
+            id: `addr-${Date.now()}`,
+            title: newAddress.title || 'Other',
+            isDefault: isFirstAddress,
+            recipientName: newAddress.recipientName || userProfile.fullName,
+            phone: newAddress.phone || userProfile.phone,
+            line1: newAddress.line1,
+            city: newAddress.city,
+            state: newAddress.state,
+            pincode: newAddress.pincode,
+          };
+          setAddresses((curr) => [added, ...curr]);
+        } else if (data) {
+          const added: SavedAddress = {
+            id: data.id,
+            title: data.title || 'Home',
+            isDefault: Boolean(data.is_default),
+            recipientName: data.recipient_name || '',
+            phone: data.phone || '',
+            line1: data.address_line1 || '',
+            line2: data.address_line2 || '',
+            city: data.city || '',
+            state: data.state || '',
+            pincode: data.pincode || '',
+          };
+          setAddresses((curr) => [added, ...curr]);
+        }
+      } else {
+        const added: SavedAddress = {
+          id: `addr-${Date.now()}`,
+          title: newAddress.title || 'Other',
+          isDefault: isFirstAddress,
+          recipientName: newAddress.recipientName || userProfile.fullName,
+          phone: newAddress.phone || userProfile.phone,
+          line1: newAddress.line1,
+          city: newAddress.city,
+          state: newAddress.state,
+          pincode: newAddress.pincode,
+        };
+        setAddresses((curr) => [added, ...curr]);
+      }
+
+      setIsAddingAddress(false);
+      setNewAddress({
+        title: 'Studio',
+        recipientName: '',
+        phone: '',
+        line1: '',
+        city: '',
+        state: 'Rajasthan',
+        pincode: '',
+      });
+    } catch (err) {
+      console.error('[Account] Add address exception:', err);
+    } finally {
+      setIsSavingAddress(false);
+    }
   };
 
   if (!isMounted) {
@@ -206,42 +333,51 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#FDF8F0] pt-28 sm:pt-32 pb-28 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Botanical watermark linework layered in top-right and bottom-left */}
-      <BotanicalWatermark
-        opacity={0.06}
-        className="-top-28 -right-28 w-[580px] h-[580px] sm:w-[720px] sm:h-[720px]"
-      />
-      <BotanicalWatermark
-        opacity={0.05}
-        className="-bottom-36 -left-36 w-[640px] h-[640px] sm:w-[800px] sm:h-[800px] rotate-90"
-      />
-
-      {/* Subtle radial ambient background wash */}
+    <div className="relative min-h-screen bg-[#FDF8F0] pt-28 sm:pt-36 pb-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      {/* Background Subtle Gradient Wash: warm cream fading softly to faint terracotta at the edges */}
       <div
         className="pointer-events-none absolute inset-0 z-0"
         style={{
           background:
-            'radial-gradient(ellipse at 70% 20%, rgba(238, 210, 197, 0.35) 0%, rgba(253, 248, 240, 0) 65%)',
+            'radial-gradient(ellipse 90% 80% at 50% 30%, #FDF8F0 30%, #FAF1E4 65%, #F4E4D0 100%)',
+        }}
+      />
+
+      {/* Prominent Botanical watermark linework layered in top-right and bottom-left */}
+      <BotanicalWatermark
+        opacity={0.11}
+        className="-top-24 -right-24 w-[620px] h-[620px] sm:w-[820px] sm:h-[820px] rotate-[-15deg]"
+      />
+      <BotanicalWatermark
+        opacity={0.09}
+        className="-bottom-32 -left-32 w-[680px] h-[680px] sm:w-[900px] sm:h-[900px] rotate-90"
+      />
+
+      {/* Primary Top Ambient Glow Wash */}
+      <div
+        className="pointer-events-none absolute top-16 left-1/2 -translate-x-1/2 z-0 w-[700px] h-[450px] sm:w-[900px] sm:h-[550px] rounded-full blur-[100px] sm:blur-[130px]"
+        style={{
+          background:
+            'radial-gradient(ellipse, rgba(206, 123, 85, 0.22) 0%, rgba(229, 178, 93, 0.14) 50%, rgba(253, 248, 240, 0) 75%)',
         }}
       />
 
       <div className="relative z-10 max-w-6xl mx-auto">
-        {/* Header Area */}
-        <div className="mb-10 sm:mb-12 flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 border-b border-terracotta/15 pb-6">
+        {/* Header Area with more generous breathing room */}
+        <div className="mb-12 sm:mb-16 flex flex-col sm:flex-row sm:items-baseline justify-between gap-5 border-b border-terracotta/15 pb-8">
           <div>
             <span className="text-xs uppercase tracking-widest text-terracotta font-semibold">
               Artisan Patron Portal
             </span>
-            <div className="flex items-baseline space-x-3 mt-1">
+            <div className="flex items-baseline space-x-3 mt-2">
               <BlurText
                 text={`Welcome back, ${userProfile.fullName.split(' ')[0]}`}
                 direction="top"
-                className="font-serif text-3xl sm:text-4xl lg:text-5xl text-terracotta-dark font-medium"
+                className="font-serif text-3xl sm:text-5xl lg:text-6xl text-terracotta-dark font-medium tracking-tight"
               />
             </div>
-            <p className="text-xs sm:text-sm text-terracotta-600 mt-1 font-light">
-              Manage your handcrafted commissions, delivery locations, and textile preferences.
+            <p className="text-xs sm:text-sm text-terracotta-600 mt-2 font-light max-w-xl leading-relaxed">
+              Manage your handcrafted commissions, delivery locations, and slow-living textile preferences.
             </p>
           </div>
 
@@ -258,39 +394,51 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* 3 Staggered Glass Section Cards */}
+        {/* 3 Staggered Glass Section Cards with Individual Ambient Glows & Generous Spacing */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start"
         >
           {/* ========================================================== */}
           {/* SECTION 1: PROFILE DETAILS (4 cols on desktop) */}
           {/* ========================================================== */}
-          <motion.div
-            variants={cardVariants}
-            className="lg:col-span-4 rounded-2xl p-6 sm:p-8 shadow-glass space-y-6"
-            style={{
-              background: 'rgba(253, 248, 240, 0.65)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.35)',
-            }}
-          >
-            <div className="flex items-center justify-between pb-4 border-b border-terracotta/15">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-full bg-terracotta/10 text-terracotta flex items-center justify-center">
-                  <User className="w-4 h-4" />
+          <motion.div variants={cardVariants} className="lg:col-span-4 relative group">
+            {/* Ambient Terracotta Glow behind Profile Card */}
+            <div
+              className="pointer-events-none absolute -inset-2 rounded-3xl blur-[40px] opacity-70 group-hover:opacity-100 transition-opacity duration-500 -z-10"
+              style={{
+                background:
+                  'radial-gradient(circle at 50% 30%, rgba(206, 123, 85, 0.25) 0%, rgba(229, 178, 93, 0.15) 50%, transparent 75%)',
+              }}
+            />
+
+            <div
+              className="relative rounded-3xl p-7 sm:p-9 shadow-glass space-y-6 backdrop-blur-[24px] overflow-hidden"
+              style={{
+                background: 'rgba(253, 248, 240, 0.72)',
+                border: '1px solid rgba(255, 255, 255, 0.55)',
+                boxShadow:
+                  'inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), 0 16px 40px -10px rgba(61, 36, 24, 0.1)',
+              }}
+            >
+              {/* Top glass inner edge highlight */}
+              <div className="glass-inner-highlight" />
+
+              <div className="flex items-center justify-between pb-4 border-b border-terracotta/15">
+                <div className="flex items-center space-x-3">
+                  <div className="w-9 h-9 rounded-full bg-terracotta/10 text-terracotta flex items-center justify-center shadow-inner">
+                    <User className="w-4.5 h-4.5" />
+                  </div>
+                  <h2 className="font-serif text-2xl text-terracotta-dark font-medium">
+                    Profile
+                  </h2>
                 </div>
-                <h2 className="font-serif text-xl text-terracotta-dark font-medium">
-                  Profile
-                </h2>
+                <span className="text-[11px] px-3 py-1 rounded-full bg-gold/15 text-gold-dark border border-gold/30 font-medium tracking-wide">
+                  {userProfile.memberTier}
+                </span>
               </div>
-              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-gold/15 text-gold-dark border border-gold/30 font-medium">
-                {userProfile.memberTier}
-              </span>
-            </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div>
@@ -385,45 +533,58 @@ export default function AccountPage() {
                 <span>Member priority queue for custom botanical dyeings</span>
               </p>
             </div>
+            </div>
           </motion.div>
 
           {/* ========================================================== */}
           {/* SECTION 2 & 3 (8 cols on desktop) */}
           {/* ========================================================== */}
-          <div className="lg:col-span-8 space-y-8">
+          <div className="lg:col-span-8 space-y-10">
             {/* ---------------- SECTION 2: ORDER HISTORY ---------------- */}
-            <motion.div
-              variants={cardVariants}
-              className="rounded-2xl p-6 sm:p-8 shadow-glass space-y-5"
-              style={{
-                background: 'rgba(253, 248, 240, 0.65)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.35)',
-              }}
-            >
-              <div className="flex items-center justify-between pb-4 border-b border-terracotta/15">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-full bg-terracotta/10 text-terracotta flex items-center justify-center">
-                    <Package className="w-4 h-4" />
+            <motion.div variants={cardVariants} className="relative group">
+              {/* Ambient Glow behind Order History */}
+              <div
+                className="pointer-events-none absolute -inset-2 rounded-3xl blur-[40px] opacity-60 group-hover:opacity-100 transition-opacity duration-500 -z-10"
+                style={{
+                  background:
+                    'radial-gradient(ellipse at 70% 30%, rgba(206, 123, 85, 0.22) 0%, rgba(229, 178, 93, 0.12) 50%, transparent 75%)',
+                }}
+              />
+
+              <div
+                className="relative rounded-3xl p-7 sm:p-9 shadow-glass space-y-6 backdrop-blur-[24px] overflow-hidden"
+                style={{
+                  background: 'rgba(253, 248, 240, 0.72)',
+                  border: '1px solid rgba(255, 255, 255, 0.55)',
+                  boxShadow:
+                    'inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), 0 16px 40px -10px rgba(61, 36, 24, 0.1)',
+                }}
+              >
+                {/* Top glass inner edge highlight */}
+                <div className="glass-inner-highlight" />
+
+                <div className="flex items-center justify-between pb-4 border-b border-terracotta/15">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-9 h-9 rounded-full bg-terracotta/10 text-terracotta flex items-center justify-center shadow-inner">
+                      <Package className="w-4.5 h-4.5" />
+                    </div>
+                    <div>
+                      <h2 className="font-serif text-2xl text-terracotta-dark font-medium">
+                        Order History
+                      </h2>
+                      <span className="text-xs text-terracotta-600 font-light">
+                        Track handcrafted creations &amp; delivery milestones
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="font-serif text-xl text-terracotta-dark font-medium">
-                      Order History
-                    </h2>
-                    <span className="text-[11px] text-terracotta-600 font-light">
-                      Track handcrafted creations &amp; delivery status
-                    </span>
-                  </div>
+                  <Link
+                    href="/shop"
+                    className="text-xs text-terracotta hover:text-terracotta-dark font-medium inline-flex items-center space-x-1 transition-colors"
+                  >
+                    <span>Explore Shop</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-                <Link
-                  href="/shop"
-                  className="text-xs text-terracotta hover:text-terracotta-dark font-medium inline-flex items-center space-x-1"
-                >
-                  <span>Explore Shop</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
 
               {orders.length === 0 ? (
                 <div className="text-center py-10 px-4 rounded-xl bg-white/30 border border-terracotta/10 text-terracotta-600 text-xs">
@@ -483,33 +644,46 @@ export default function AccountPage() {
                   })}
                 </div>
               )}
+              </div>
             </motion.div>
 
             {/* ---------------- SECTION 3: SAVED ADDRESSES ---------------- */}
-            <motion.div
-              variants={cardVariants}
-              className="rounded-2xl p-6 sm:p-8 shadow-glass space-y-5"
-              style={{
-                background: 'rgba(253, 248, 240, 0.65)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.35)',
-              }}
-            >
-              <div className="flex items-center justify-between pb-4 border-b border-terracotta/15">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-full bg-terracotta/10 text-terracotta flex items-center justify-center">
-                    <MapPin className="w-4 h-4" />
+            <motion.div variants={cardVariants} className="relative group">
+              {/* Ambient Glow behind Saved Addresses */}
+              <div
+                className="pointer-events-none absolute -inset-2 rounded-3xl blur-[40px] opacity-60 group-hover:opacity-100 transition-opacity duration-500 -z-10"
+                style={{
+                  background:
+                    'radial-gradient(ellipse at 30% 70%, rgba(206, 123, 85, 0.22) 0%, rgba(229, 178, 93, 0.12) 50%, transparent 75%)',
+                }}
+              />
+
+              <div
+                className="relative rounded-3xl p-7 sm:p-9 shadow-glass space-y-6 backdrop-blur-[24px] overflow-hidden"
+                style={{
+                  background: 'rgba(253, 248, 240, 0.72)',
+                  border: '1px solid rgba(255, 255, 255, 0.55)',
+                  boxShadow:
+                    'inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), 0 16px 40px -10px rgba(61, 36, 24, 0.1)',
+                }}
+              >
+                {/* Top glass inner edge highlight */}
+                <div className="glass-inner-highlight" />
+
+                <div className="flex items-center justify-between pb-4 border-b border-terracotta/15">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-9 h-9 rounded-full bg-terracotta/10 text-terracotta flex items-center justify-center shadow-inner">
+                      <MapPin className="w-4.5 h-4.5" />
+                    </div>
+                    <div>
+                      <h2 className="font-serif text-2xl text-terracotta-dark font-medium">
+                        Saved Addresses
+                      </h2>
+                      <span className="text-xs text-terracotta-600 font-light">
+                        Manage shipping destinations for future checkouts
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="font-serif text-xl text-terracotta-dark font-medium">
-                      Saved Addresses
-                    </h2>
-                    <span className="text-[11px] text-terracotta-600 font-light">
-                      Manage shipping destinations for future checkouts
-                    </span>
-                  </div>
-                </div>
 
                 {!isAddingAddress && (
                   <button
@@ -621,9 +795,11 @@ export default function AccountPage() {
                     <div className="flex items-center space-x-2 pt-2">
                       <button
                         type="submit"
-                        className="px-4 py-2 rounded-full bg-[#8B4520] hover:bg-[#703517] text-white text-xs font-medium transition-colors cursor-pointer"
+                        disabled={isSavingAddress}
+                        className="px-4 py-2 rounded-full bg-[#8B4520] hover:bg-[#703517] disabled:opacity-60 text-white text-xs font-medium transition-colors cursor-pointer flex items-center space-x-1.5"
                       >
-                        Save Address
+                        {isSavingAddress && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        <span>{isSavingAddress ? 'Saving...' : 'Save Address'}</span>
                       </button>
                       <button
                         type="button"
@@ -638,7 +814,12 @@ export default function AccountPage() {
               </AnimatePresence>
 
               {/* Address List or Empty State */}
-              {addresses.length === 0 ? (
+              {isLoadingAddresses ? (
+                <div className="text-center py-10 flex flex-col items-center justify-center space-y-2 text-terracotta-600 text-xs">
+                  <Loader2 className="w-5 h-5 animate-spin text-terracotta" />
+                  <span>Loading saved addresses...</span>
+                </div>
+              ) : addresses.length === 0 ? (
                 <div className="text-center py-10 px-6 rounded-2xl bg-white/35 border border-dashed border-terracotta/25 space-y-3">
                   <div className="w-10 h-10 rounded-full bg-terracotta/10 text-terracotta flex items-center justify-center mx-auto">
                     <MapPin className="w-5 h-5 text-terracotta" />
@@ -693,6 +874,7 @@ export default function AccountPage() {
                   ))}
                 </div>
               )}
+              </div>
             </motion.div>
           </div>
         </motion.div>

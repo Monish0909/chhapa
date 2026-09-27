@@ -188,7 +188,7 @@ export default function AdminDashboardPage() {
             <div className="py-2.5 flex items-center justify-between">
               <div>
                 <p className="font-medium text-slate-800">#CHP-829140 · Aarav Sharma</p>
-                <p className="text-xs text-slate-500">Ajrakh Natural Indigo Shirt</p>
+                <p className="text-xs text-slate-500">Hand-Painted Indigo Bloom Silk-Cotton Shirt</p>
               </div>
               <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
                 Awaiting WhatsApp
@@ -197,7 +197,7 @@ export default function AdminDashboardPage() {
             <div className="py-2.5 flex items-center justify-between">
               <div>
                 <p className="font-medium text-slate-800">#CHP-719342 · Priya Sen</p>
-                <p className="text-xs text-slate-500">Bagru Mud-Resist Mineral Kurta</p>
+                <p className="text-xs text-slate-500">Hand-Painted Mineral Terracotta Kurta</p>
               </div>
               <span className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
                 Payment Received

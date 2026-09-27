@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { MessageCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MessageCircle, CheckCircle2 } from 'lucide-react';
 import { CHHAPA_WHATSAPP_NUMBER } from '@/lib/constants';
+import { supabase } from '@/lib/supabase';
 
 type OrderStatus =
   | 'Pending'
@@ -11,7 +12,7 @@ type OrderStatus =
   | 'Shipped'
   | 'Delivered';
 
-interface MockOrder {
+interface AdminOrder {
   id: string;
   orderNumber: string;
   customerName: string;
@@ -21,49 +22,6 @@ interface MockOrder {
   date: string;
   status: OrderStatus;
 }
-
-const initialOrders: MockOrder[] = [
-  {
-    id: '1',
-    orderNumber: 'CHP-829140',
-    customerName: 'Aarav Sharma',
-    customerPhone: '+91 98765 43210',
-    items: 'Ajrakh Natural Indigo Shirt (M)',
-    total: 3598,
-    date: '2026-09-24',
-    status: 'Awaiting WhatsApp confirmation',
-  },
-  {
-    id: '2',
-    orderNumber: 'CHP-719342',
-    customerName: 'Priya Sen',
-    customerPhone: '+91 98111 22334',
-    items: 'Bagru Mud-Resist Mineral Kurta (S)',
-    total: 4298,
-    date: '2026-09-23',
-    status: 'Payment Received',
-  },
-  {
-    id: '3',
-    orderNumber: 'CHP-654129',
-    customerName: 'Meera Patel',
-    customerPhone: '+91 97234 56789',
-    items: 'Little Chhapa Quilted Play Vest (4-5Y)',
-    total: 2598,
-    date: '2026-09-21',
-    status: 'Shipped',
-  },
-  {
-    id: '4',
-    orderNumber: 'CHP-543211',
-    customerName: 'Ananya Deshmukh',
-    customerPhone: '+91 99887 76655',
-    items: 'Sanganeri Botanical Hand Block Dress (M)',
-    total: 5398,
-    date: '2026-09-18',
-    status: 'Delivered',
-  },
-];
 
 const statusStyles: Record<OrderStatus, { bg: string; text: string; border: string }> = {
   Pending: {
@@ -93,20 +51,98 @@ const statusStyles: Record<OrderStatus, { bg: string; text: string; border: stri
   },
 };
 
+function normalizeStatus(dbStatus: string | undefined): OrderStatus {
+  if (!dbStatus) return 'Awaiting WhatsApp confirmation';
+  const lower = dbStatus.toLowerCase();
+  if (lower.includes('pending')) return 'Pending';
+  if (lower.includes('awaiting') || lower.includes('whatsapp')) return 'Awaiting WhatsApp confirmation';
+  if (lower.includes('payment') || lower.includes('received')) return 'Payment Received';
+  if (lower.includes('shipped')) return 'Shipped';
+  if (lower.includes('delivered')) return 'Delivered';
+  return 'Awaiting WhatsApp confirmation';
+}
+
+function formatItemsSummary(items: unknown): string {
+  if (!items) return 'Custom Order';
+  if (typeof items === 'string') return items;
+  if (Array.isArray(items)) {
+    return items
+      .map((it: { name?: string; productId?: string; size?: string; quantity?: number }) =>
+        `${it.name || it.productId || 'Item'}${it.size ? ` (${it.size})` : ''}${it.quantity && it.quantity > 1 ? ` x${it.quantity}` : ''}`
+      )
+      .join(', ');
+  }
+  return 'Custom Order';
+}
+
 export default function AdminOrdersPage() {
   const [isMounted, setIsMounted] = useState(false);
-  const [orders, setOrders] = useState<MockOrder[]>(initialOrders);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('Supabase fetch orders warning:', error.message);
+      } else if (data && data.length > 0) {
+        const mapped: AdminOrder[] = data.map((row: Record<string, unknown>) => ({
+          id: String(row.id || ''),
+          orderNumber: `CHP-${String(row.id || '').slice(0, 6).toUpperCase()}`,
+          customerName: (row.customer_name as string) || 'Anonymous Customer',
+          customerPhone: (row.phone as string) || 'N/A',
+          items: formatItemsSummary(row.items),
+          total: Number(row.total || 0),
+          date: row.created_at ? new Date(row.created_at as string).toISOString().split('T')[0] : 'Today',
+          status: normalizeStatus(row.status as string),
+        }));
+        setOrders(mapped);
+        return;
+      }
+    } catch (err) {
+      console.warn('Supabase orders fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     setIsMounted(true);
+    fetchOrders();
   }, []);
 
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
+  const showNotification = (msg: string) => {
+    setNotification(msg);
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+    // Optimistic UI update
     setOrders((prev) =>
       prev.map((order) =>
         order.id === orderId ? { ...order, status: newStatus } : order
       )
     );
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+
+      if (error) {
+        console.warn('Supabase order status update warning:', error.message);
+      }
+      showNotification(`Order status updated to "${newStatus}".`);
+    } catch (err) {
+      console.error('Failed to update order status in Supabase:', err);
+    }
   };
 
   return (
@@ -120,6 +156,14 @@ export default function AdminOrdersPage() {
           Review customer orders, verify manual UPI payments on WhatsApp, and update fulfillment milestones.
         </p>
       </div>
+
+      {/* Notification Toast */}
+      {notification && (
+        <div className="p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center space-x-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <span>{notification}</span>
+        </div>
+      )}
 
       {/* Manual UPI Notice */}
       <div className="p-4 rounded-lg bg-amber-50/70 border border-amber-200/80 text-xs sm:text-sm text-amber-900 flex items-start space-x-3">
@@ -147,10 +191,16 @@ export default function AdminOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {!isMounted ? (
+              {!isMounted || loading ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-slate-400 text-sm">
                     Loading orders...
+                  </td>
+                </tr>
+              ) : orders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-slate-500 text-sm">
+                    No orders found in the database.
                   </td>
                 </tr>
               ) : (

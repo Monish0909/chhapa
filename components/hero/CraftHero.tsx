@@ -127,7 +127,7 @@ export function CraftHero({
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
-        // Meditative woodblock carving radial motifs pulsing with scrub playhead
+        // Meditative freehand brushwork radial motifs pulsing with scrub playhead
         const progress = index / Math.max(frameCount - 1, 1);
         ctx.save();
         ctx.strokeStyle = 'rgba(244, 194, 194, 0.08)';

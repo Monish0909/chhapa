@@ -3,15 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, Menu, X } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
+import { useAuth } from '@/lib/useAuth';
+import StaggeredMenu from '@/components/ui/StaggeredMenu';
 
 export function GlassNav() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   
+  const { isAuthenticated } = useAuth();
   const totalItems = useCartStore((state) => state.getTotalItems());
   const toggleCart = useCartStore((state) => state.toggleCart);
   const cartPulseTick = useCartStore((state) => state.cartPulseTick);
@@ -35,39 +37,75 @@ export function GlassNav() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile drawer on route change
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
 
-  // Prevent background scroll when mobile menu is open
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [mobileMenuOpen]);
 
   // Hide nav on admin routes and homepage (homepage hero has its own integrated header)
   if (pathname?.startsWith('/admin') || pathname === '/') {
     return null;
   }
 
+  // Reactive Navigation Links: Show "Account" when logged in, "Login" when logged out
   const navLinks = [
     { name: 'Shop', href: '/shop' },
     { name: 'Craft', href: '/craft' },
     { name: 'Lookbook', href: '/lookbook' },
-    { name: 'Login', href: '/login' },
-    { name: 'Account', href: '/account' },
+    isAuthenticated
+      ? { name: 'Account', href: '/account' }
+      : { name: 'Login', href: '/login' },
   ];
+
+  // Mobile Nav items with reactive auth state
+  const mobileNavItems = [
+    { label: 'Shop', link: '/shop', ariaLabel: 'Shop Handcrafted Silhouettes' },
+    { label: 'Our Craft', link: '/craft', ariaLabel: 'Our Botanical Craft Heritage' },
+    { label: 'Lookbook', link: '/lookbook', ariaLabel: 'Editorial Lookbook' },
+    isAuthenticated
+      ? { label: 'Account', link: '/account', ariaLabel: 'Patron Account' }
+      : { label: 'Login', link: '/login', ariaLabel: 'Customer Login' },
+  ];
+
+  const socialLinks = [
+    { label: 'Instagram', link: 'https://instagram.com' },
+  ];
+
+  const handleMenuOpen = () => {
+    document.body.style.overflow = 'hidden';
+    if (typeof window !== 'undefined' && window.__lenis?.stop) {
+      window.__lenis.stop();
+    }
+  };
+
+  const handleMenuClose = () => {
+    document.body.style.overflow = '';
+    if (typeof window !== 'undefined' && window.__lenis?.start) {
+      window.__lenis.start();
+    }
+  };
 
   return (
     <>
-      <header className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-50 w-[min(94vw,1100px)] pointer-events-none">
+      {/* Mobile Staggered Menu (< 768px) */}
+      <div className="md:hidden">
+        <StaggeredMenu
+          position="right"
+          colors={['rgba(253,248,240,0.95)', 'rgba(240,214,168,0.4)']}
+          accentColor="#8B4520"
+          menuButtonColor="#3d2418"
+          openMenuButtonColor="#3d2418"
+          displayItemNumbering={true}
+          closeOnClickAway={true}
+          logoUrl="/chhapa-logo.svg"
+          isFixed={true}
+          items={mobileNavItems}
+          socialItems={socialLinks}
+          displaySocials={true}
+          onMenuOpen={handleMenuOpen}
+          onMenuClose={handleMenuClose}
+        />
+      </div>
+
+      {/* Desktop Floating Glass Navigation Bar (>= 768px only) */}
+      <header className="hidden md:block fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-30 w-[min(94vw,1100px)] pointer-events-none">
         <nav
           className={`pointer-events-auto w-full px-5 sm:px-8 py-3 sm:py-4 rounded-full flex items-center justify-between transition-all duration-300 ${
             isScrolled ? 'glass-nav-scrolled' : 'glass-effect'
@@ -88,7 +126,7 @@ export function GlassNav() {
             chhapa
           </Link>
 
-          {/* Desktop Links (Hidden below 768px) */}
+          {/* Desktop Links (Hidden below 768px, desktop floating glass nav bar remains unchanged) */}
           <div className="hidden md:flex items-center space-x-7 text-sm font-medium text-terracotta-dark">
             {navLinks.map((link) => (
               <Link
@@ -103,7 +141,7 @@ export function GlassNav() {
             ))}
           </div>
 
-          {/* Actions & Mobile Hamburger */}
+          {/* Actions: Shopping Bag (desktop & mobile) */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             <button
               onClick={toggleCart}
@@ -127,65 +165,9 @@ export function GlassNav() {
                 </span>
               )}
             </button>
-
-            {/* Mobile Hamburger Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2.5 rounded-full hover:bg-white/40 text-terracotta-dark transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
           </div>
         </nav>
       </header>
-
-      {/* Full-Screen Glass Overlay Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[60] bg-[#FDF8F0]/90 backdrop-blur-xl flex flex-col justify-between p-6 sm:p-10 md:hidden animate-fadeIn">
-          {/* Top Bar with Logo and Close X */}
-          <div className="flex items-center justify-between pt-2">
-            <Link
-              href="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="font-serif text-3xl tracking-wider text-terracotta-dark font-semibold"
-            >
-              chhapa
-            </Link>
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-3 rounded-full bg-white/50 text-terracotta-dark border border-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
-              aria-label="Close menu"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          {/* Centered Vertically Stacked Links */}
-          <div className="flex flex-col space-y-6 my-auto text-center">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`font-serif text-3xl transition-colors py-2 min-h-[44px] flex items-center justify-center ${
-                  pathname === link.href
-                    ? 'text-terracotta font-semibold'
-                    : 'text-terracotta-dark hover:text-terracotta'
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-          </div>
-
-          {/* Bottom Branding / Social Note */}
-          <div className="text-center pt-4 border-t border-terracotta/10 text-xs text-terracotta-600">
-            <p>Handcrafted block prints &amp; living dyes</p>
-            <p className="mt-1 font-light opacity-80">Jaipur • Kutch • Ahmedabad</p>
-          </div>
-        </div>
-      )}
     </>
   );
 }

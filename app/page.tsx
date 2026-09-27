@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, ArrowRight, Sparkles, Heart, Menu, X } from 'lucide-react';
+import { ShoppingBag, ArrowRight, Sparkles, Heart } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
@@ -13,59 +13,93 @@ import { Badge } from '@/components/ui/Badge';
 import BorderGlow from '@/components/ui/BorderGlow';
 import BlurText from '@/components/ui/BlurText';
 import GlowCursor from '@/components/ui/GlowCursor';
-
+import { getProducts, MockProduct } from '@/lib/products';
+import { useAuth } from '@/lib/useAuth';
+import StaggeredMenu from '@/components/ui/StaggeredMenu';
 
 // Register GSAP ScrollTrigger plugin on client
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-// Curated sample products for the featured collection section
-const featuredProducts = [
+// Curated sample products fallback for the featured collection section
+const initialFeaturedProducts: MockProduct[] = [
   {
     id: '1',
-    slug: 'ajrakh-indigo-shirt',
-    name: 'Ajrakh Natural Indigo Shirt',
-    tagline: 'Hand block-printed on handspun organic cotton',
+    slug: 'indigo-bloom-silk-cotton-shirt',
+    name: 'Hand-Painted Indigo Bloom Silk-Cotton Shirt',
+    tagline: 'Freehand brush-painted on handspun organic cotton with natural indigo',
     price: 3499,
     originalPrice: 4200,
-    category: 'Shirts',
-    badge: 'Natural Dye',
+    category: 'women',
+    images: ['/frames/home/frame_0001.jpg'],
+    sizes: ['S', 'M', 'L'],
+    shipsInDays: '7-10 days',
+    sold: false,
+    fabricCare: 'Gentle handwash with natural detergent',
+    details: '100% natural organic cotton hand-painted freehand with botanical indigo.',
+    shippingReturns: 'Free insured shipping across India.',
+    sizeChart: [],
+    createdAt: '2026-09-24T00:00:00.000Z',
   },
   {
     id: '2',
-    slug: 'bagru-terracotta-kurta',
-    name: 'Bagru Mud-Resist Kurta',
-    tagline: 'Dabu mud resist printed with mineral terracotta dye',
+    slug: 'terracotta-brush-kurta',
+    name: 'Hand-Painted Mineral Terracotta Kurta',
+    tagline: 'Freehand brush stroke motifs rendered in mineral terracotta dye & harda',
     price: 4199,
     originalPrice: 4800,
-    category: 'Kurtas',
-    badge: 'Heritage Craft',
+    category: 'women',
+    images: ['/frames/home/frame_0015.jpg'],
+    sizes: ['S', 'M', 'L'],
+    shipsInDays: '7-10 days',
+    sold: false,
+    fabricCare: 'Gentle handwash with natural detergent',
+    details: '100% natural organic cotton painted with earth mineral pigments.',
+    shippingReturns: 'Free insured shipping across India.',
+    sizeChart: [],
+    createdAt: '2026-09-23T00:00:00.000Z',
   },
   {
     id: '3',
     slug: 'kalamkari-silk-stole',
-    name: 'Kalamkari Silk Stole',
-    tagline: 'Pen and block drawn natural dyed mulberry silk',
+    name: 'Kalamkari Botanical Silk Stole',
+    tagline: 'Pen and brush drawn natural dyed mulberry silk',
     price: 2899,
     originalPrice: 3500,
-    category: 'Accessories',
-    badge: 'Artisanal',
+    category: 'accessories',
+    images: ['/frames/home/frame_0035.jpg'],
+    sizes: ['One Size'],
+    shipsInDays: '7-10 days',
+    sold: false,
+    fabricCare: 'Dry clean only',
+    details: 'Hand-drawn Kalamkari motifs with soft brush detailing.',
+    shippingReturns: 'Free insured shipping across India.',
+    sizeChart: [],
+    createdAt: '2026-09-21T00:00:00.000Z',
   },
   {
     id: '4',
-    slug: 'sanganeri-linen-dress',
-    name: 'Sanganeri Hand Block Dress',
-    tagline: 'Pure breathable linen with delicate floral motifs',
+    slug: 'botanical-linen-dress',
+    name: 'Hand-Painted Botanical Linen Dress',
+    tagline: 'Pure breathable linen with delicate hand-painted floral motifs',
     price: 5299,
     originalPrice: 5999,
-    category: 'Dresses',
-    badge: 'Limited Edition',
+    category: 'women',
+    images: ['/frames/home/frame_0055.jpg'],
+    sizes: ['S', 'M', 'L', 'XL'],
+    shipsInDays: '7-10 days',
+    sold: false,
+    fabricCare: 'Gentle handwash with natural detergent',
+    details: 'Breathable linen handcrafted silhouette with freehand brush art.',
+    shippingReturns: 'Free insured shipping across India.',
+    sizeChart: [],
+    createdAt: '2026-09-18T00:00:00.000Z',
   },
 ];
 
 export default function HomePage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [productsList, setProductsList] = React.useState<MockProduct[]>(initialFeaturedProducts);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contentWrapperRef = useRef<HTMLDivElement>(null);
   const heroTextRef = useRef<HTMLDivElement>(null);
@@ -76,11 +110,32 @@ export default function HomePage() {
   const toggleCart = useCartStore((state) => state.toggleCart);
   const addItem = useCartStore((state) => state.addItem);
 
+  const { isAuthenticated } = useAuth();
+
+  const homeNavLinks = [
+    { name: 'Shop', href: '/shop' },
+    { name: 'Craft', href: '/craft' },
+    { name: 'Lookbook', href: '/lookbook' },
+    isAuthenticated
+      ? { name: 'Account', href: '/account' }
+      : { name: 'Login', href: '/login' },
+  ];
+
   const framePath = '/frames/home';
   const frameCount = 192;
 
   useEffect(() => {
     setIsMounted(true);
+
+    const isActive = true;
+    getProducts()
+      .then((items) => {
+        if (isActive && items && items.length > 0) {
+          setProductsList(items.slice(0, 4));
+        }
+      })
+      .catch((err) => console.warn('Supabase home products load:', err));
+
     const canvas = canvasRef.current;
     const contentWrapper = contentWrapperRef.current;
     const heroText = heroTextRef.current;
@@ -102,6 +157,11 @@ export default function HomePage() {
 
     // Synchronize Lenis scroll with GSAP ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update);
+
+    // Expose lenis globally for overlay lock coordination
+    if (typeof window !== 'undefined') {
+      window.__lenis = lenis;
+    }
 
     // Drive Lenis RAF through GSAP ticker for synchronous scroll scrub precision
     const tickerCallback = (time: number) => {
@@ -183,7 +243,7 @@ export default function HomePage() {
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
-        // Subtle blockprint heritage radial motif that pulses with scroll playhead
+        // Subtle hand-painted botanical heritage radial motif that pulses with scroll playhead
         const progress = safeIndex / Math.max(frameCount - 1, 1);
         ctx.save();
         ctx.strokeStyle = 'rgba(244, 194, 194, 0.08)';
@@ -327,9 +387,9 @@ export default function HomePage() {
       />
 
       {/* ------------------------------------------------------------------ */}
-      {/* 3. FLOATING GLASS NAVIGATION (z-20, fixed top) */}
+      {/* 3. FLOATING GLASS NAVIGATION (z-20, fixed top, desktop only) */}
       {/* ------------------------------------------------------------------ */}
-      <header className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-20 w-[min(94vw,1100px)] pointer-events-none">
+      <header className="hidden md:block fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-20 w-[min(94vw,1100px)] pointer-events-none">
         <nav
           ref={navRef}
           id="global-glass-nav"
@@ -351,18 +411,15 @@ export default function HomePage() {
 
           <div className="flex items-center space-x-2 sm:space-x-8">
             <div className="hidden md:flex items-center space-x-7 text-sm font-medium text-terracotta-dark">
-              <Link href="/shop" className="hover:text-terracotta transition-colors py-2">
-                Shop
-              </Link>
-              <Link href="/craft" className="hover:text-terracotta transition-colors py-2">
-                Craft
-              </Link>
-              <Link href="/lookbook" className="hover:text-terracotta transition-colors py-2">
-                Lookbook
-              </Link>
-              <Link href="/login" className="hover:text-terracotta transition-colors py-2">
-                Login
-              </Link>
+              {homeNavLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="hover:text-terracotta transition-colors py-2"
+                >
+                  {link.name}
+                </Link>
+              ))}
             </div>
 
             <button
@@ -377,63 +434,46 @@ export default function HomePage() {
                 </span>
               )}
             </button>
-
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2.5 rounded-full hover:bg-white/40 text-terracotta-dark transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
           </div>
         </nav>
       </header>
 
-      {/* Fullscreen Mobile Menu Overlay for Home */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[60] bg-[#FDF8F0]/90 backdrop-blur-xl flex flex-col justify-between p-6 sm:p-10 md:hidden">
-          <div className="flex items-center justify-between pt-2">
-            <Link
-              href="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="font-serif text-3xl tracking-wider text-terracotta-dark font-semibold"
-            >
-              chhapa
-            </Link>
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-3 rounded-full bg-white/50 text-terracotta-dark border border-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
-              aria-label="Close menu"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          <div className="flex flex-col space-y-6 my-auto text-center">
-            {[
-              { name: 'Shop', href: '/shop' },
-              { name: 'Craft', href: '/craft' },
-              { name: 'Lookbook', href: '/lookbook' },
-              { name: 'Login', href: '/login' },
-              { name: 'Account', href: '/account' },
-            ].map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="font-serif text-3xl text-terracotta-dark hover:text-terracotta transition-colors py-2 min-h-[44px] flex items-center justify-center"
-              >
-                {link.name}
-              </Link>
-            ))}
-          </div>
-
-          <div className="text-center pt-4 border-t border-terracotta/10 text-xs text-terracotta-600">
-            <p>Handcrafted block prints &amp; living dyes</p>
-            <p className="mt-1 font-light opacity-80">Jaipur • Kutch • Ahmedabad</p>
-          </div>
-        </div>
-      )}
+      {/* Mobile Staggered Menu (< 768px) */}
+      <div className="md:hidden">
+        <StaggeredMenu
+          position="right"
+          colors={['rgba(253,248,240,0.95)', 'rgba(240,214,168,0.4)']}
+          accentColor="#8B4520"
+          menuButtonColor="#3d2418"
+          openMenuButtonColor="#3d2418"
+          displayItemNumbering={true}
+          closeOnClickAway={true}
+          logoUrl="/chhapa-logo.svg"
+          isFixed={true}
+          items={[
+            { label: 'Shop', link: '/shop', ariaLabel: 'Shop Handcrafted Silhouettes' },
+            { label: 'Our Craft', link: '/craft', ariaLabel: 'Our Craft Story' },
+            { label: 'Lookbook', link: '/lookbook', ariaLabel: 'Lookbook' },
+            isAuthenticated
+              ? { label: 'Account', link: '/account', ariaLabel: 'Patron Account' }
+              : { label: 'Login', link: '/login', ariaLabel: 'Customer Login' },
+          ]}
+          socialItems={[{ label: 'Instagram', link: 'https://instagram.com' }]}
+          displaySocials={true}
+          onMenuOpen={() => {
+            document.body.style.overflow = 'hidden';
+            if (typeof window !== 'undefined' && window.__lenis?.stop) {
+              window.__lenis.stop();
+            }
+          }}
+          onMenuClose={() => {
+            document.body.style.overflow = '';
+            if (typeof window !== 'undefined' && window.__lenis?.start) {
+              window.__lenis.start();
+            }
+          }}
+        />
+      </div>
 
       {/* ------------------------------------------------------------------ */}
       {/* 4. NORMAL-FLOW SCROLLING CONTENT CONTAINER (z-10, transparent) */}
@@ -477,7 +517,7 @@ export default function HomePage() {
                 </div>
 
                 <p className="mt-4 text-sm sm:text-base text-terracotta-dark/80 max-w-lg mx-auto font-light leading-relaxed">
-                  Slow-crafted botanical block prints and timeless silhouettes designed for mindful living.
+                  Slow-crafted botanical hand-painted textiles and timeless silhouettes designed for mindful living.
                 </p>
 
                 <div className="mt-8 flex justify-center gap-4">
@@ -519,7 +559,7 @@ export default function HomePage() {
                     Shop Women
                   </h3>
                   <p className="text-sm text-terracotta-dark/80 max-w-sm leading-relaxed font-light">
-                    Flowing silhouettes, handspun cotton kurtas, mud-resist tiered dresses, and artisanal silk stoles.
+                    Flowing silhouettes, handspun cotton kurtas, mineral-washed tiered dresses, and artisanal silk stoles.
                   </p>
                 </div>
                 <div className="pt-6">
@@ -548,7 +588,7 @@ export default function HomePage() {
                     Shop Kids
                   </h3>
                   <p className="text-sm text-terracotta-dark/80 max-w-sm leading-relaxed font-light">
-                    Gentle organic cotton frocks, natural indigo play sets, and hand-quilted Ajrakh Nehru vests for tender skin.
+                    Gentle organic cotton frocks, natural indigo play sets, and hand-painted quilted Nehru vests for tender skin.
                   </p>
                 </div>
                 <div className="pt-6">
@@ -592,7 +632,7 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {featuredProducts.map((product) => (
+              {productsList.map((product) => (
                 <BorderGlow
                   key={product.id}
                   borderRadius={16}
@@ -603,9 +643,17 @@ export default function HomePage() {
                   <div className="p-4 flex flex-col justify-between h-full group">
                     <div>
                       <div className="aspect-[3/4] rounded-xl bg-terracotta-50 overflow-hidden relative flex items-center justify-center font-serif text-terracotta-400">
-                        <span className="text-xs uppercase tracking-wider">chhapa silhouette</span>
+                        {product.images && product.images[0] ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <span className="text-xs uppercase tracking-wider">chhapa silhouette</span>
+                        )}
                         <div className="absolute top-2.5 left-2.5">
-                          <Badge variant="terracotta">{product.badge}</Badge>
+                          <Badge variant="terracotta">{product.category}</Badge>
                         </div>
                       </div>
 
@@ -676,13 +724,13 @@ export default function HomePage() {
               </span>
               <div className="flex justify-center">
                 <BlurText
-                  text="Centuries of Wood Carving & Botanical Indigo Vats"
+                  text="Freehand Brushwork & Botanical Indigo Vats"
                   direction="top"
                   className="font-serif text-3xl sm:text-4xl text-terracotta-dark max-w-2xl mx-auto font-medium justify-center text-center"
                 />
               </div>
               <p className="text-sm sm:text-base text-terracotta-dark/80 max-w-xl mx-auto leading-relaxed">
-                Every garment begins with seasoned teak wood blocks hand-chiseled by master artisans, dipped in fermented natural dyes, and stamped with mindful precision.
+                Every garment begins with unbleached organic fibers laid over low drafting frames, brought to life through intuitive freehand brush strokes and living fermented plant dyes.
               </p>
               <div className="pt-4">
                 <Link href="/craft">
@@ -750,7 +798,7 @@ export default function HomePage() {
                     The Mustard Two-Piece
                   </div>
                   <h4 className="font-serif text-lg font-medium text-terracotta-dark">Mineral Warmth</h4>
-                  <p className="text-xs text-terracotta-600">Turmeric and madder root hand-stamped textures.</p>
+                  <p className="text-xs text-terracotta-600">Turmeric and madder root hand-painted brush textures.</p>
                 </div>
               </BorderGlow>
 
@@ -762,10 +810,10 @@ export default function HomePage() {
               >
                 <div className="p-5 space-y-3">
                   <div className="aspect-[4/5] rounded-xl bg-blush-light/50 flex items-center justify-center font-serif text-terracotta-dark/60 text-sm">
-                    Dabu Mud-Resist Stoles
+                    Botanical Silk Stoles
                   </div>
                   <h4 className="font-serif text-lg font-medium text-terracotta-dark">River Washed Silk</h4>
-                  <p className="text-xs text-terracotta-600">Soft drape crafted with ancient mud-resist blocks.</p>
+                  <p className="text-xs text-terracotta-600">Soft drape painted freehand with pure plant extracts.</p>
                 </div>
               </BorderGlow>
             </div>
@@ -790,7 +838,7 @@ export default function HomePage() {
                   chhapa
                 </span>
                 <p className="text-xs text-terracotta-dark/80 max-w-sm leading-relaxed">
-                  Honoring the age-old heritage of Indian hand-block printing with natural dyes and slow ethical craftsmanship.
+                  Honoring the age-old heritage of Indian freehand hand-painting with natural dyes and slow ethical craftsmanship.
                 </p>
               </div>
 

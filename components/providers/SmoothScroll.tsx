@@ -11,6 +11,11 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       smoothWheel: true,
     });
 
+    // Expose lenis instance globally so modals and overlays can pause/resume scrolling smoothly
+    if (typeof window !== 'undefined') {
+      window.__lenis = lenis;
+    }
+
     function raf(time: number) {
       lenis.raf(time);
       requestAnimationFrame(raf);
@@ -20,6 +25,9 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
     return () => {
       cancelAnimationFrame(rafId);
+      if (typeof window !== 'undefined' && window.__lenis === lenis) {
+        window.__lenis = undefined;
+      }
       lenis.destroy();
     };
   }, []);

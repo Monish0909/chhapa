@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, ArrowRight, Sparkles, Menu, X } from 'lucide-react';
+import { ShoppingBag, ArrowRight, Sparkles } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
@@ -10,6 +10,7 @@ import { useCartStore } from '@/lib/store';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { GlassButton } from '@/components/ui/GlassButton';
 import BlurText from '@/components/ui/BlurText';
+import { useAuth } from '@/lib/useAuth';
 
 // Register GSAP ScrollTrigger plugin on client
 if (typeof window !== 'undefined') {
@@ -24,16 +25,16 @@ const galleryItems = [
     category: "Women's Edit",
     aspect: 'aspect-[3/4]',
     tag: 'Handspun Cotton',
-    caption: 'Sun-drenched mustard crop and relaxed trousers with wood-stamped flora.',
+    caption: 'Sun-drenched mustard crop and relaxed trousers with freehand-painted flora.',
     accentBg: 'from-[#E5B25D]/40 to-[#DEA68D]/40',
   },
   {
     id: 2,
-    title: 'Little Chhapa Dabu Frock',
+    title: 'Little Chhapa Flora Frock',
     category: "Kids' Craft",
     aspect: 'aspect-[4/5]',
     tag: 'Mineral Terracotta',
-    caption: 'Soft river-washed mud resist frock tailored for gentle toddler skin.',
+    caption: 'Soft river-washed hand-painted frock tailored for gentle toddler skin.',
     accentBg: 'from-[#F4C2C2]/40 to-[#FDF8F0]/40',
   },
   {
@@ -47,20 +48,20 @@ const galleryItems = [
   },
   {
     id: 4,
-    title: 'Junior Ajrakh Nehru Vest',
+    title: 'Junior Quilted Nehru Vest',
     category: "Kids' Craft",
     aspect: 'aspect-[3/4]',
     tag: '100% Natural Dye',
-    caption: 'Quilted blockprint vest with wooden coconut shell buttons.',
+    caption: 'Quilted hand-painted vest with wooden coconut shell buttons.',
     accentBg: 'from-[#E5B25D]/30 to-[#8B4520]/30',
   },
   {
     id: 5,
-    title: 'Bagh Floral Tiered Maxi',
+    title: 'Botanical Floral Tiered Maxi',
     category: "Women's Edit",
     aspect: 'aspect-[4/5]',
-    tag: 'Artisan Blockprint',
-    caption: 'Flowing multi-tiered silhouette printed with red alum and harda.',
+    tag: 'Artisan Brushwork',
+    caption: 'Flowing multi-tiered silhouette hand-painted with red alum and harda.',
     accentBg: 'from-[#DEA68D]/40 to-[#FDF8F0]/40',
   },
   {
@@ -88,13 +89,12 @@ const garmentSections = [
   },
   {
     id: 'section-terracotta',
-    chipText: 'Bagru Mud-Resist Kurta & Stole — Look 03',
+    chipText: 'Mineral Terracotta Kurta & Stole — Look 03',
     subtitle: 'River-Washed Mineral Craft',
   },
 ];
 
 export default function LookbookPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contentWrapperRef = useRef<HTMLDivElement>(null);
   const captionChipRef = useRef<HTMLDivElement>(null);
@@ -102,6 +102,17 @@ export default function LookbookPage() {
 
   const totalItems = useCartStore((state) => state.getTotalItems());
   const toggleCart = useCartStore((state) => state.toggleCart);
+
+  const { isAuthenticated } = useAuth();
+
+  const lookbookNavLinks = [
+    { name: 'Shop', href: '/shop' },
+    { name: 'Craft', href: '/craft' },
+    { name: 'Lookbook', href: '/lookbook' },
+    isAuthenticated
+      ? { name: 'Account', href: '/account' }
+      : { name: 'Login', href: '/login' },
+  ];
 
   const framePath = '/frames/lookbook';
   const frameCount = 192;
@@ -128,6 +139,10 @@ export default function LookbookPage() {
 
     // Synchronize Lenis scroll with GSAP ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update);
+
+    if (typeof window !== 'undefined') {
+      window.__lenis = lenis;
+    }
 
     // Drive Lenis RAF through GSAP ticker for synchronous scroll scrub precision
     const tickerCallback = (time: number) => {
@@ -337,9 +352,9 @@ export default function LookbookPage() {
       />
 
       {/* ------------------------------------------------------------------ */}
-      {/* 2. FLOATING GLASS NAVIGATION (z-20, fixed top) */}
+      {/* 2. FLOATING GLASS NAVIGATION (z-20, fixed top, desktop only) */}
       {/* ------------------------------------------------------------------ */}
-      <header className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-20 w-[min(94vw,1100px)] pointer-events-none">
+      <header className="hidden md:block fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-20 w-[min(94vw,1100px)] pointer-events-none">
         <nav
           ref={navRef}
           id="lookbook-glass-nav"
@@ -361,18 +376,19 @@ export default function LookbookPage() {
 
           <div className="flex items-center space-x-2 sm:space-x-8">
             <div className="hidden md:flex items-center space-x-7 text-sm font-medium text-terracotta-dark">
-              <Link href="/shop" className="hover:text-terracotta transition-colors py-2">
-                Shop
-              </Link>
-              <Link href="/craft" className="hover:text-terracotta transition-colors py-2">
-                Craft
-              </Link>
-              <Link href="/lookbook" className="text-terracotta font-semibold py-2">
-                Lookbook
-              </Link>
-              <Link href="/login" className="hover:text-terracotta transition-colors py-2">
-                Login
-              </Link>
+              {lookbookNavLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`transition-colors py-2 ${
+                    link.href === '/lookbook'
+                      ? 'text-terracotta font-semibold'
+                      : 'hover:text-terracotta'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
             </div>
 
             <button
@@ -387,63 +403,9 @@ export default function LookbookPage() {
                 </span>
               )}
             </button>
-
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2.5 rounded-full hover:bg-white/40 text-terracotta-dark transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
           </div>
         </nav>
       </header>
-
-      {/* Fullscreen Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[60] bg-[#FDF8F0]/90 backdrop-blur-xl flex flex-col justify-between p-6 sm:p-10 md:hidden">
-          <div className="flex items-center justify-between pt-2">
-            <Link
-              href="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="font-serif text-3xl tracking-wider text-terracotta-dark font-semibold"
-            >
-              chhapa
-            </Link>
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-3 rounded-full bg-white/50 text-terracotta-dark border border-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center shadow-sm"
-              aria-label="Close menu"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          <div className="flex flex-col space-y-6 my-auto text-center">
-            {[
-              { name: 'Shop', href: '/shop' },
-              { name: 'Craft', href: '/craft' },
-              { name: 'Lookbook', href: '/lookbook' },
-              { name: 'Login', href: '/login' },
-              { name: 'Account', href: '/account' },
-            ].map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="font-serif text-3xl text-terracotta-dark hover:text-terracotta transition-colors py-2 min-h-[44px] flex items-center justify-center"
-              >
-                {link.name}
-              </Link>
-            ))}
-          </div>
-
-          <div className="text-center pt-4 border-t border-terracotta/10 text-xs text-terracotta-600">
-            <p>Handcrafted block prints &amp; living dyes</p>
-            <p className="mt-1 font-light opacity-80">Jaipur • Kutch • Ahmedabad</p>
-          </div>
-        </div>
-      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* 3. NORMAL-FLOW SCROLLING CONTENT CONTAINER (z-10, transparent) */}
@@ -589,7 +551,7 @@ export default function LookbookPage() {
               />
             </div>
             <p className="text-sm sm:text-base text-terracotta-dark/80 max-w-md mx-auto leading-relaxed font-light">
-              Explore the complete collection of hand-block printed garments created with botanical natural dyes.
+              Explore the complete collection of freehand hand-painted garments created with botanical natural dyes.
             </p>
             <div className="pt-4 flex justify-center">
               <Link href="/shop">

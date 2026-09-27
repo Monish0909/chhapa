@@ -1,17 +1,32 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Edit2, Trash2, CheckCircle2 } from 'lucide-react';
-import { mockProducts as initialMockProducts, MockProduct } from '@/lib/mockProducts';
+import { supabase } from '@/lib/supabase';
+import { getProducts, MockProduct } from '@/lib/products';
 
 export default function AdminProductsPage() {
   const [isMounted, setIsMounted] = useState(false);
-  const [products, setProducts] = useState<MockProduct[]>(initialMockProducts);
+  const [products, setProducts] = useState<MockProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const items = await getProducts();
+      setProducts(items);
+    } catch (err) {
+      console.warn('Failed to load products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     setIsMounted(true);
+    loadProducts();
   }, []);
 
   const showNotification = (msg: string) => {
@@ -19,26 +34,49 @@ export default function AdminProductsPage() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"?`)) {
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
+
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) {
+        console.warn('Supabase delete error:', error.message);
+      }
       setProducts((current) => current.filter((p) => p.id !== id));
       showNotification(`Product "${name}" deleted.`);
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      // Optimistic removal fallback
+      setProducts((current) => current.filter((p) => p.id !== id));
+      showNotification(`Product "${name}" removed.`);
     }
   };
 
-  const handleToggleSold = (id: string) => {
+  const handleToggleSold = async (id: string) => {
+    const target = products.find((p) => p.id === id);
+    if (!target) return;
+    const newSoldState = !target.sold;
+
+    // Optimistic local update
     setProducts((current) =>
-      current.map((p) => {
-        if (p.id === id) {
-          const updated = { ...p, sold: !p.sold };
-          showNotification(
-            `"${p.name}" marked as ${updated.sold ? 'Sold' : 'Available'}.`
-          );
-          return updated;
-        }
-        return p;
-      })
+      current.map((p) => (p.id === id ? { ...p, sold: newSoldState } : p))
     );
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ sold: newSoldState })
+        .eq('id', id);
+
+      if (error) {
+        console.warn('Supabase toggle sold error:', error.message);
+      }
+      showNotification(
+        `"${target.name}" marked as ${newSoldState ? 'Sold' : 'Available'}.`
+      );
+    } catch (err) {
+      console.error('Failed to update product sold status in Supabase:', err);
+    }
   };
 
   return (
@@ -86,7 +124,7 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {!isMounted ? (
+              {!isMounted || loading ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-slate-400 text-sm">
                     Loading products...
@@ -167,18 +205,13 @@ export default function AdminProductsPage() {
 
                     {/* Edit & Delete Action Buttons */}
                     <td className="py-3 px-4 text-right space-x-2 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          alert(
-                            `Editing for "${product.name}" will be connected to product edit modal/page in next phase.`
-                          )
-                        }
+                      <Link
+                        href={`/admin/products/${product.id}/edit`}
                         className="inline-flex items-center space-x-1 px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors"
                       >
                         <Edit2 className="w-3.5 h-3.5 text-slate-500" />
                         <span>Edit</span>
-                      </button>
+                      </Link>
 
                       <button
                         type="button"

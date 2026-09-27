@@ -46,7 +46,7 @@ export function BotanicalWatermark({
             </g>
           ))}
 
-          {/* Outer Layer: Flowing Paisley / Ajrakh Botanical Motifs */}
+          {/* Outer Layer: Flowing Paisley / Freehand Botanical Motifs */}
           {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((angle, i) => (
             <g key={`paisley-${i}`} transform={`rotate(${angle} 300 300)`}>
               {/* Stem curving outwards */}

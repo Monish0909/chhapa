@@ -3,31 +3,48 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ProductCard } from '@/components/product/ProductCard';
-import { GlassPanel } from '@/components/ui/GlassPanel';
 import BlurText from '@/components/ui/BlurText';
-import { mockProducts, MockProduct } from '@/lib/mockProducts';
+import { BotanicalWatermark } from '@/components/ui/BotanicalWatermark';
+import { getProducts, MockProduct } from '@/lib/products';
 import { SlidersHorizontal, ArrowUpDown, X, Sparkles } from 'lucide-react';
 
 type CategoryFilter = 'All' | 'Women' | 'Kids';
 type SortOption = 'Newest' | 'Price: Low to High' | 'Price: High to Low';
 
 export default function ShopPage() {
+  const [products, setProducts] = useState<MockProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('All');
   const [selectedSize, setSelectedSize] = useState<string>('All');
   const [selectedSort, setSelectedSort] = useState<SortOption>('Newest');
 
+  // Load products from Supabase on mount
+  React.useEffect(() => {
+    setLoading(true);
+    getProducts()
+      .then((data) => {
+        setProducts(data);
+      })
+      .catch((err) => {
+        console.error('[ShopPage] Failed to fetch products:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
   // Compute all available unique sizes across the catalog for the size filter pills
   const availableSizes = useMemo(() => {
     const sizeSet = new Set<string>();
-    mockProducts.forEach((product) => {
+    products.forEach((product) => {
       product.sizes?.forEach((sz) => sizeSet.add(sz));
     });
     return Array.from(sizeSet);
-  }, []);
+  }, [products]);
 
   // Filter and sort products reactively
   const filteredProducts = useMemo(() => {
-    let list = [...mockProducts];
+    let list = [...products];
 
     // 1. Category Filter
     if (selectedCategory !== 'All') {
@@ -82,34 +99,84 @@ export default function ShopPage() {
   };
 
   return (
-    <div className="pt-28 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Header Banner */}
-      <GlassPanel className="text-center py-12 mb-8">
-        <span className="text-xs uppercase tracking-widest text-terracotta font-semibold">
-          Artisanal Catalog
-        </span>
-        <div className="flex justify-center mt-2">
-          <BlurText
-            text="Shop The Collection"
-            direction="top"
-            className="font-serif text-3xl sm:text-5xl text-terracotta-dark justify-center text-center"
-          />
-        </div>
-        <p className="text-sm text-terracotta-600 mt-2 max-w-md mx-auto font-light">
-          Handcrafted slow fashion dyed with natural botanical extracts. One-of-one silhouettes made to order.
-        </p>
-      </GlassPanel>
-
-      {/* Filter & Sort Bar */}
+    <div className="relative min-h-screen bg-[#FDF8F0] pt-28 pb-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      {/* Background Subtle Gradient Wash: warm cream fading softly to faint terracotta at the edges */}
       <div
-        className="rounded-2xl p-4 sm:p-5 mb-8 shadow-glass transition-all space-y-4"
+        className="pointer-events-none absolute inset-0 z-0"
         style={{
-          background: 'rgba(253, 248, 240, 0.65)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          border: '1px solid rgba(255, 255, 255, 0.35)',
+          background:
+            'radial-gradient(ellipse 95% 75% at 50% 20%, #FDF8F0 25%, #FAF1E4 60%, #F4E5D4 100%)',
         }}
-      >
+      />
+
+      {/* Prominent Botanical Watermark Motifs behind grid and page header */}
+      <BotanicalWatermark
+        opacity={0.09}
+        className="-top-20 -right-20 w-[600px] h-[600px] sm:w-[800px] sm:h-[800px] rotate-[-10deg]"
+      />
+      <BotanicalWatermark
+        opacity={0.075}
+        className="top-[45%] -left-32 w-[650px] h-[650px] sm:w-[850px] sm:h-[850px] rotate-45"
+      />
+      <BotanicalWatermark
+        opacity={0.06}
+        className="-bottom-28 right-10 w-[550px] h-[550px] sm:w-[750px] sm:h-[750px] rotate-12"
+      />
+
+      {/* Soft Ambient Depth Glow behind Header */}
+      <div
+        className="pointer-events-none absolute top-20 left-1/2 -translate-x-1/2 z-0 w-[600px] h-[350px] sm:w-[850px] sm:h-[450px] rounded-full blur-[100px]"
+        style={{
+          background:
+            'radial-gradient(ellipse, rgba(206, 123, 85, 0.22) 0%, rgba(229, 178, 93, 0.12) 50%, transparent 75%)',
+        }}
+      />
+
+      <div className="relative z-10 max-w-7xl mx-auto">
+        {/* Header Banner */}
+        <div
+          className="relative text-center py-12 sm:py-16 mb-10 rounded-3xl overflow-hidden"
+          style={{
+            background: 'rgba(253, 248, 240, 0.65)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            boxShadow:
+              'inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), 0 16px 40px -10px rgba(61, 36, 24, 0.08)',
+          }}
+        >
+          {/* Top inner glass highlight */}
+          <div className="glass-inner-highlight" />
+
+          <span className="text-xs uppercase tracking-widest text-terracotta font-semibold">
+            Artisanal Catalog
+          </span>
+          <div className="flex justify-center mt-2">
+            <BlurText
+              text="Shop The Collection"
+              direction="top"
+              className="font-serif text-3xl sm:text-5xl lg:text-6xl text-terracotta-dark justify-center text-center tracking-tight"
+            />
+          </div>
+          <p className="text-xs sm:text-sm text-terracotta-600 mt-2 max-w-lg mx-auto font-light leading-relaxed">
+            Handcrafted slow fashion dyed with natural botanical extracts. One-of-one silhouettes made to order.
+          </p>
+        </div>
+
+        {/* Floating Filter & Sort Bar */}
+        <div
+          className="relative rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-10 shadow-glass-hover transition-all space-y-4 overflow-hidden"
+          style={{
+            background: 'rgba(253, 248, 240, 0.75)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.55)',
+            boxShadow:
+              'inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), 0 14px 38px -6px rgba(61, 36, 24, 0.1)',
+          }}
+        >
+          {/* Floating bar inner highlight */}
+          <div className="glass-inner-highlight" />
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Left: Category Filter Pills */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
@@ -225,9 +292,20 @@ export default function ShopPage() {
         </span>
       </div>
 
-      {/* Catalog Grid or Empty State with Staggered Entrance */}
+      {/* Catalog Grid, Loading, or Empty State with Staggered Entrance */}
       <AnimatePresence mode="wait">
-        {filteredProducts.length === 0 ? (
+        {loading ? (
+          <motion.div
+            key="loading-state"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="text-center py-24 px-6 max-w-xl mx-auto"
+          >
+            <div className="w-10 h-10 border-2 border-terracotta border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="font-serif text-lg text-terracotta-dark">Loading collection...</p>
+          </motion.div>
+        ) : filteredProducts.length === 0 ? (
           <motion.div
             key="empty-state"
             initial={{ opacity: 0, y: 16 }}
@@ -245,20 +323,26 @@ export default function ShopPage() {
               <Sparkles className="w-7 h-7 text-gold stroke-[1.5]" />
             </div>
             <h2 className="font-serif text-xl sm:text-2xl text-terracotta-dark font-medium">
-              No pieces match your filters right now
+              {products.length === 0
+                ? 'No products in the collection yet'
+                : 'No pieces match your filters right now'}
             </h2>
             <p className="text-xs sm:text-sm text-terracotta-600 mt-2 max-w-md mx-auto leading-relaxed">
-              Try adjusting your category or size selection to discover more handcrafted silhouettes.
+              {products.length === 0
+                ? 'New handcrafted silhouettes will appear here once added to the catalog.'
+                : 'Try adjusting your category or size selection to discover more handcrafted silhouettes.'}
             </p>
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="px-6 py-2.5 rounded-full bg-[#8B4520] hover:bg-[#703517] text-white text-xs font-medium tracking-wide transition-all shadow-sm hover:shadow"
-              >
-                Reset All Filters
-              </button>
-            </div>
+            {products.length > 0 && (
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="px-6 py-2.5 rounded-full bg-[#8B4520] hover:bg-[#703517] text-white text-xs font-medium tracking-wide transition-all shadow-sm hover:shadow"
+                >
+                  Reset All Filters
+                </button>
+              </div>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -297,6 +381,7 @@ export default function ShopPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }

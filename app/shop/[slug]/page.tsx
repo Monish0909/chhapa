@@ -7,7 +7,7 @@ import { ProductGallery } from '@/components/product/ProductGallery';
 import { SizeChartModal } from '@/components/product/SizeChartModal';
 import { ProductAccordion, AccordionSection } from '@/components/product/ProductAccordion';
 import { useCartStore } from '@/lib/store';
-import { getProductBySlug, mockProducts, MockProduct } from '@/lib/mockProducts';
+import { getProductBySlug, MockProduct } from '@/lib/products';
 import { motion } from 'motion/react';
 
 interface PageProps {
@@ -17,40 +17,29 @@ interface PageProps {
 export default function ProductDetailPage({ params }: PageProps) {
   const { slug } = params;
 
-  // Retrieve matching mock product or fallback gracefully to the first product
-  const productData: MockProduct =
-    getProductBySlug(slug) ||
-    mockProducts[0] || {
-      id: 'prod-fallback',
-      slug,
-      name: slug
-        .split('-')
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' '),
-      price: 3499,
-      originalPrice: 4200,
-      images: [
-        '/frames/home/frame_0001.jpg',
-        '/frames/home/frame_0015.jpg',
-        '/frames/home/frame_0035.jpg',
-        '/frames/home/frame_0055.jpg',
-      ],
-      sizeChart: [
-        { size: 'S', measurements: { Chest: '38"', Waist: '34"', Length: '28"' } },
-        { size: 'M', measurements: { Chest: '40"', Waist: '36"', Length: '29"' } },
-        { size: 'L', measurements: { Chest: '42"', Waist: '38"', Length: '30"' } },
-        { size: 'XL', measurements: { Chest: '44"', Waist: '40"', Length: '31"' } },
-      ],
-      shipsInDays: '7-10 days',
-      sold: false,
-      fabricCare:
-        'Crafted from 100% certified handspun organic cotton. Hand-wash separately in cold water with mild or pH-neutral liquid detergent.',
-      details:
-        'One-of-one silhouette handcrafted using natural plant dyes and traditional block printing techniques.',
-      shippingReturns:
-        'Free insured shipping across India. Exchanges accepted within 7 days in unworn condition.',
-      category: 'women',
+  const [productData, setProductData] = useState<MockProduct | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProduct() {
+      setLoading(true);
+      try {
+        const item = await getProductBySlug(slug);
+        if (isMounted) {
+          setProductData(item);
+        }
+      } catch (err) {
+        console.error('[ProductDetailPage] Failed to load product:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadProduct();
+    return () => {
+      isMounted = false;
     };
+  }, [slug]);
 
   const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -67,7 +56,7 @@ export default function ProductDetailPage({ params }: PageProps) {
   }, [showToast]);
 
   const handleAddToCart = () => {
-    if (productData.sold) return;
+    if (!productData || productData.sold) return;
 
     addItem({
       productId: productData.id,
@@ -84,6 +73,35 @@ export default function ProductDetailPage({ params }: PageProps) {
     // Trigger sliding toast
     setShowToast(true);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-[70vh] pt-32 pb-24 px-4 flex flex-col items-center justify-center text-center">
+        <div className="w-10 h-10 border-2 border-terracotta border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="font-serif text-lg text-terracotta-dark">Retrieving silhouette details...</p>
+      </div>
+    );
+  }
+
+  if (!productData) {
+    return (
+      <div className="min-h-[70vh] pt-32 pb-24 px-4 flex flex-col items-center justify-center text-center">
+        <h1 className="font-serif text-2xl sm:text-3xl text-terracotta-dark font-medium mb-3">
+          Piece Not Found
+        </h1>
+        <p className="text-sm text-terracotta-600 max-w-md mb-6 font-light">
+          This handcrafted silhouette is not present in our collection or has been archived.
+        </p>
+        <Link
+          href="/shop"
+          className="inline-flex items-center px-6 py-2.5 rounded-full bg-[#8B4520] text-white text-xs font-medium tracking-wide shadow-sm hover:bg-[#703517] transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Return to Shop
+        </Link>
+      </div>
+    );
+  }
 
   const accordionSections: AccordionSection[] = [
     {
@@ -113,7 +131,7 @@ export default function ProductDetailPage({ params }: PageProps) {
         <div className="space-y-3 font-light text-terracotta-dark/85">
           <p>{productData.details}</p>
           <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm pt-1 text-terracotta-dark/80">
-            <li>Individually carved seasoned teakwood block motifs</li>
+            <li>Individually painted freehand with fine artisan brushes</li>
             <li>Artisanal batch-dyed with raw botanical extracts and minerals</li>
             <li>French seams &amp; hand-finished edge hem details</li>
             <li>Tailored to celebrate natural organic drape and hand-feel</li>
@@ -317,7 +335,7 @@ export default function ProductDetailPage({ params }: PageProps) {
             <div className="mt-6 pt-5 border-t border-terracotta/15 grid grid-cols-2 gap-2 text-[11px] text-terracotta-600">
               <div className="flex items-center space-x-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-terracotta" />
-                <span>Authentic Hand-Block Print</span>
+                <span>Authentic Freehand Brushcraft</span>
               </div>
               <div className="flex items-center space-x-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-gold" />

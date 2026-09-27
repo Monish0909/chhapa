@@ -25,7 +25,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Chhapa — Artisanal Handcrafted Textiles & Apparel',
   description:
-    'Discover timeless block-printed sustainable silhouettes and artisanal heritage crafts curated for modern everyday living.',
+    'Discover timeless hand-painted sustainable silhouettes and artisanal heritage crafts curated for modern everyday living.',
 };
 
 export default function RootLayout({

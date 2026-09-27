@@ -139,7 +139,7 @@ export function ScrollVideoHero({
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
-        // Subtle blockprint heritage radial motif that pulses subtly with scroll playhead
+        // Subtle hand-painted botanical textile radial motif that pulses subtly with scroll playhead
         const progress = index / Math.max(frameCount - 1, 1);
         ctx.save();
         ctx.strokeStyle = 'rgba(244, 194, 194, 0.09)';

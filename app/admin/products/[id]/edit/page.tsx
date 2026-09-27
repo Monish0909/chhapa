@@ -1,11 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, Upload, Image as ImageIcon } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
+import { ArrowLeft, CheckCircle2, AlertCircle, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-export default function AdminNewProductPage() {
+export default function AdminEditProductPage() {
+  const router = useRouter();
+  const params = useParams();
+  const productId = params?.id as string;
+
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -16,9 +21,93 @@ export default function AdminNewProductPage() {
   });
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isSaved, setIsSaved] = useState(false);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [sold, setSold] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Fetch product data on mount
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProduct() {
+      if (!productId) {
+        setIsLoading(false);
+        setNotFound(true);
+        return;
+      }
+
+      setIsLoading(true);
+      setNotFound(false);
+      setErrorMessage(null);
+
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', productId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('[Admin Edit Product] Fetch error:', error);
+          if (isMounted) {
+            setErrorMessage(error.message);
+            setNotFound(true);
+          }
+          return;
+        }
+
+        if (!data) {
+          if (isMounted) {
+            setNotFound(true);
+          }
+          return;
+        }
+
+        if (isMounted) {
+          const categoryDisplay =
+            data.category && data.category.toLowerCase() === 'kids' ? 'Kids' : 'Women';
+
+          setFormData({
+            name: data.name || '',
+            price: data.price !== undefined && data.price !== null ? String(data.price) : '',
+            category: categoryDisplay,
+            description: data.details || '',
+            fabricCare: data.fabric_care || '',
+            shipsInDays: data.ships_in_days ? `${data.ships_in_days} days` : '7-10 days',
+          });
+
+          setSold(Boolean(data.sold));
+
+          if (Array.isArray(data.images) && data.images.length > 0) {
+            setExistingImages(data.images);
+            setImagePreview(data.images[0]);
+          } else {
+            setExistingImages([]);
+            setImagePreview(null);
+          }
+        }
+      } catch (err) {
+        console.error('[Admin Edit Product] Exception fetching product:', err);
+        if (isMounted) {
+          setNotFound(true);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [productId]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -42,46 +131,91 @@ export default function AdminNewProductPage() {
 
     const priceNum = parseFloat(formData.price) || 0;
     const shipsDaysNum = parseInt(formData.shipsInDays.replace(/[^0-9]/g, '')) || 7;
-    const imagesArray = imagePreview ? [imagePreview] : ['/frames/home/frame_0001.jpg'];
+    
+    // Determine images array
+    let imagesArray: string[];
+    if (imagePreview) {
+      // If imagePreview is still the first existing image, keep existing images
+      if (existingImages.length > 0 && imagePreview === existingImages[0]) {
+        imagesArray = existingImages;
+      } else {
+        imagesArray = [imagePreview];
+      }
+    } else {
+      imagesArray = existingImages.length > 0 ? existingImages : ['/frames/home/frame_0001.jpg'];
+    }
+
     const categoryLower = formData.category.toLowerCase();
 
     try {
-      const { error } = await supabase.from('products').insert({
-        name: formData.name,
-        price: priceNum,
-        category: categoryLower,
-        images: imagesArray,
-        size_chart: [
-          { size: 'S', measurements: { Chest: '38"', Waist: '34"', Length: '28"' } },
-          { size: 'M', measurements: { Chest: '40"', Waist: '36"', Length: '29"' } },
-          { size: 'L', measurements: { Chest: '42"', Waist: '38"', Length: '30"' } },
-          { size: 'XL', measurements: { Chest: '44"', Waist: '40"', Length: '31"' } },
-        ],
-        ships_in_days: shipsDaysNum,
-        sold: false,
-        fabric_care: formData.fabricCare || 'Crafted from 100% natural organic cotton. Gentle cold handwash.',
-        details: formData.description || 'Handcrafted slow living piece with natural plant dyes.',
-        shipping_returns: 'Free insured shipping across India. Exchanges accepted within 7 days in unworn condition.',
-      });
+      const { error } = await supabase
+        .from('products')
+        .update({
+          name: formData.name,
+          price: priceNum,
+          category: categoryLower,
+          images: imagesArray,
+          ships_in_days: shipsDaysNum,
+          fabric_care: formData.fabricCare,
+          details: formData.description,
+        })
+        .eq('id', productId);
 
       if (error) {
-        console.warn('Supabase product insert warning:', error.message);
+        console.error('[Admin Edit Product] Supabase update error:', error);
         setErrorMessage(error.message);
+        setIsSubmitting(false);
+        return;
       }
+
       setIsSaved(true);
+      // Auto-redirect to /admin/products after brief pause so the user sees success
+      setTimeout(() => {
+        router.push('/admin/products');
+      }, 1200);
     } catch (err: unknown) {
-      console.error('Failed to create product in Supabase:', err);
-      const msg = err instanceof Error ? err.message : 'Error saving product';
+      console.error('[Admin Edit Product] Exception updating product:', err);
+      const msg = err instanceof Error ? err.message : 'Error updating product';
       setErrorMessage(msg);
-      setIsSaved(true);
-    } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="max-w-3xl mx-auto py-20 flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-500" />
+        <p className="text-sm text-slate-500 font-medium">Loading product details...</p>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 text-center space-y-4">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50 text-red-500 mb-2">
+          <AlertCircle className="w-6 h-6 stroke-[1.5]" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-900">Product Not Found</h1>
+        <p className="text-sm text-slate-500 max-w-md mx-auto">
+          The product with ID <code className="px-1.5 py-0.5 bg-slate-100 rounded text-xs text-slate-800">{productId}</code> could not be found in the database.
+        </p>
+        <div className="pt-4">
+          <Link
+            href="/admin/products"
+            className="inline-flex items-center px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-medium transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
+            <span>Return to Products List</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Back button */}
+      {/* Back button & Header */}
       <div>
         <Link
           href="/admin/products"
@@ -90,54 +224,59 @@ export default function AdminNewProductPage() {
           <ArrowLeft className="w-3.5 h-3.5 mr-1" />
           <span>Back to Products</span>
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-2">
-          Add New Product
-        </h1>
+        <div className="flex items-center justify-between mt-2 flex-wrap gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Edit Product
+          </h1>
+          <span
+            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
+              sold
+                ? 'bg-slate-100 text-slate-700 border-slate-300'
+                : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                sold ? 'bg-slate-500' : 'bg-emerald-500'
+              }`}
+            />
+            {sold ? 'Sold / Archived' : 'Available in Shop'}
+          </span>
+        </div>
         <p className="text-sm text-slate-500">
-          Create an artisanal one-of-one listing with craft specifications and photo preview.
+          Modify the garment specifications, pricing, imagery, and artisan details for this piece.
         </p>
       </div>
 
-      {/* Success / Status Notification */}
+      {/* Success Notification */}
       {isSaved && (
-        <div className={`p-4 rounded-lg border space-y-2 ${errorMessage ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}`}>
+        <div className="p-4 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-900 space-y-2 animate-fadeIn">
           <div className="flex items-center space-x-2">
-            <CheckCircle2 className={`w-5 h-5 flex-shrink-0 ${errorMessage ? 'text-amber-600' : 'text-emerald-600'}`} />
-            <span className="font-semibold text-sm">
-              {errorMessage ? 'Saved (With Notice)' : 'Product Saved to Supabase!'}
-            </span>
+            <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600" />
+            <span className="font-semibold text-sm">Product Updated Successfully!</span>
           </div>
-          <p className="text-xs">
-            {errorMessage
-              ? `Note: ${errorMessage}. If tables were not created yet, please run the SQL script in your Supabase dashboard.`
-              : 'Product row inserted into the products table successfully.'}
+          <p className="text-xs text-emerald-800">
+            Changes have been saved to Supabase. Redirecting back to products list...
           </p>
-          <div className="pt-2 flex space-x-3">
+          <div className="pt-2">
             <Link
               href="/admin/products"
-              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-medium transition-colors"
+              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-medium transition-colors inline-block"
             >
-              View Products List
+              Go to Products Now
             </Link>
-            <button
-              type="button"
-              onClick={() => {
-                setIsSaved(false);
-                setFormData({
-                  name: '',
-                  price: '',
-                  category: 'Women',
-                  description: '',
-                  fabricCare: '',
-                  shipsInDays: '7-10 days',
-                });
-                setImagePreview(null);
-              }}
-              className="px-3 py-1.5 bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-800 rounded text-xs font-medium transition-colors"
-            >
-              Add Another Piece
-            </button>
           </div>
+        </div>
+      )}
+
+      {/* Error Message if any */}
+      {errorMessage && !isSaved && (
+        <div className="p-4 rounded-lg border bg-red-50 border-red-200 text-red-900 space-y-1">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+            <span className="font-semibold text-sm">Update Failed</span>
+          </div>
+          <p className="text-xs text-red-700">{errorMessage}</p>
         </div>
       )}
 
@@ -267,7 +406,7 @@ export default function AdminNewProductPage() {
               {/* File Input */}
               <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-md text-xs font-medium shadow-sm transition-colors">
                 <Upload className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
-                <span>Choose Image</span>
+                <span>Replace Image</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -276,7 +415,7 @@ export default function AdminNewProductPage() {
                 />
               </label>
               <span className="text-xs text-slate-500">
-                {imagePreview ? 'Photo selected for preview' : 'PNG, JPG, WebP supported'}
+                {imagePreview ? 'Photo selected' : 'PNG, JPG, WebP supported'}
               </span>
             </div>
 
@@ -284,6 +423,7 @@ export default function AdminNewProductPage() {
             <div className="mt-3">
               {imagePreview ? (
                 <div className="relative w-36 aspect-[3/4] rounded-lg overflow-hidden border border-slate-300 bg-slate-100 shadow-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={imagePreview}
                     alt="Preview"
@@ -307,7 +447,7 @@ export default function AdminNewProductPage() {
           </div>
         </div>
 
-        {/* Submit Button */}
+        {/* Submit & Cancel Buttons */}
         <div className="pt-4 border-t border-slate-200 flex justify-end space-x-3">
           <Link
             href="/admin/products"
@@ -318,9 +458,10 @@ export default function AdminNewProductPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-5 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-md text-sm font-medium transition-colors shadow-sm"
+            className="px-5 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-md text-sm font-medium transition-colors shadow-sm flex items-center space-x-2"
           >
-            {isSubmitting ? 'Saving...' : 'Save Product'}
+            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            <span>{isSubmitting ? 'Updating...' : 'Update Product'}</span>
           </button>
         </div>
       </form>

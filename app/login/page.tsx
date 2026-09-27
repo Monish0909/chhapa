@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import BorderGlow from '@/components/ui/BorderGlow';
 import BlurText from '@/components/ui/BlurText';
 import { BotanicalWatermark } from '@/components/ui/BotanicalWatermark';
-import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldCheck, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,76 +18,137 @@ export default function LoginPage() {
     email: '',
     password: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate successful login / signup in mock mode
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const emailTrimmed = formData.email.trim();
+    const password = formData.password;
+
     try {
-      localStorage.setItem('chhapa_user', 'true');
-      if (formData.fullName) {
-        localStorage.setItem('chhapa_user_name', formData.fullName);
+      if (isRegister) {
+        // Sign Up with Supabase Auth
+        const { data, error } = await supabase.auth.signUp({
+          email: emailTrimmed,
+          password,
+          options: {
+            data: {
+              full_name: formData.fullName.trim() || undefined,
+            },
+          },
+        });
+
+        if (error) {
+          setErrorMessage(error.message);
+          setIsSubmitting(false);
+          return;
+        }
+
+        // If email confirmation is enabled on Supabase project, session may be null
+        if (data?.user && !data?.session) {
+          setSuccessMessage(
+            'Account created! Please check your email inbox to verify your account before logging in.'
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Successful registration with active session
+        router.push('/account');
+      } else {
+        // Sign In with Supabase Auth
+        const { error } = await supabase.auth.signInWithPassword({
+          email: emailTrimmed,
+          password,
+        });
+
+        if (error) {
+          setErrorMessage(error.message);
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Successful login
+        router.push('/account');
       }
-      if (formData.email) {
-        localStorage.setItem('chhapa_user_email', formData.email);
-      }
-    } catch {
-      // ignore in SSR or restricted storage
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Authentication failed';
+      setErrorMessage(msg);
+      setIsSubmitting(false);
     }
-    router.push('/account');
   };
 
   return (
-    <div className="relative min-h-screen bg-[#FDF8F0] flex items-center justify-center pt-24 pb-20 px-4 sm:px-6 overflow-hidden">
-      {/* Calm Botanical Line-Art Watermarks in opposing corners */}
-      <BotanicalWatermark
-        opacity={0.065}
-        className="-top-24 -left-24 w-[520px] h-[520px] sm:w-[680px] sm:h-[680px]"
-      />
-      <BotanicalWatermark
-        opacity={0.05}
-        className="-bottom-32 -right-32 w-[600px] h-[600px] sm:w-[750px] sm:h-[750px] rotate-45"
-      />
-
-      {/* Subtle radial ambient glow behind card */}
+    <div className="relative min-h-screen bg-[#FDF8F0] flex items-center justify-center pt-28 pb-24 px-4 sm:px-6 overflow-hidden">
+      {/* Background Subtle Gradient Wash: warm cream fading softly to faint terracotta at the edges */}
       <div
         className="pointer-events-none absolute inset-0 z-0"
         style={{
           background:
-            'radial-gradient(ellipse at 50% 50%, rgba(238, 210, 197, 0.45) 0%, rgba(253, 248, 240, 0) 70%)',
+            'radial-gradient(ellipse 90% 70% at 50% 45%, #FDF8F0 25%, #FAF1E4 65%, #F5E5D3 100%)',
+        }}
+      />
+
+      {/* Prominent Botanical Line-Art Watermarks in opposing corners */}
+      <BotanicalWatermark
+        opacity={0.11}
+        className="-top-20 -left-20 w-[580px] h-[580px] sm:w-[760px] sm:h-[760px] rotate-[-12deg]"
+      />
+      <BotanicalWatermark
+        opacity={0.09}
+        className="-bottom-28 -right-28 w-[640px] h-[640px] sm:w-[840px] sm:h-[840px] rotate-45"
+      />
+
+      {/* Large Blurred Ambient Glow Behind Card (Terracotta/Gold depth bleeding into page) */}
+      <div
+        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 w-[520px] h-[520px] sm:w-[680px] sm:h-[680px] rounded-full blur-[80px] sm:blur-[110px]"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(206, 123, 85, 0.28) 0%, rgba(229, 178, 93, 0.18) 45%, rgba(253, 248, 240, 0) 75%)',
         }}
       />
 
       {/* Centered Glass Card with BorderGlow */}
-      <div className="relative z-10 w-full max-w-[440px]">
+      <div className="relative z-10 w-full max-w-[460px]">
         <BorderGlow
-          borderRadius={24}
-          fillOpacity={0.3}
-          backgroundColor="rgba(253, 248, 240, 0.65)"
-          className="w-full shadow-glass"
+          borderRadius={28}
+          fillOpacity={0.25}
+          backgroundColor="rgba(253, 248, 240, 0.7)"
+          className="w-full shadow-glass hover:shadow-glass-hover transition-all duration-300"
         >
           <div
-            className="p-8 sm:p-10 backdrop-blur-[20px] rounded-2xl"
+            className="relative p-9 sm:p-12 backdrop-blur-[24px] rounded-[28px] overflow-hidden"
             style={{
-              border: '1px solid rgba(255, 255, 255, 0.35)',
+              border: '1px solid rgba(255, 255, 255, 0.55)',
+              boxShadow: 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), 0 16px 40px -10px rgba(61, 36, 24, 0.12)',
             }}
           >
+            {/* Subtle Inner Highlight Catching Light at the Top Edge of Glass Card */}
+            <div className="glass-inner-highlight" />
+
             {/* Top Brand Wordmark / Emblem */}
-            <div className="text-center mb-6">
+            <div className="text-center mb-7">
               <Link
                 href="/"
                 className="inline-block font-serif text-3xl sm:text-4xl tracking-wider text-terracotta-dark font-semibold hover:opacity-90 transition-opacity"
               >
                 chhapa
               </Link>
-              <div className="flex items-center justify-center space-x-1.5 text-[10px] uppercase tracking-widest text-terracotta-600 mt-1">
+              <div className="flex items-center justify-center space-x-2 text-[10px] uppercase tracking-widest text-terracotta-600 mt-1.5 font-medium">
                 <Sparkles className="w-3 h-3 text-gold" />
-                <span>Handcrafted Living Textiles</span>
+                <span>Handcrafted Slow Living</span>
                 <Sparkles className="w-3 h-3 text-gold" />
               </div>
             </div>
 
             {/* Dynamic Animated Header & Subtext */}
-            <div className="text-center min-h-[72px] flex flex-col items-center justify-center">
+            <div className="text-center min-h-[76px] flex flex-col items-center justify-center">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={isRegister ? 'signup-title' : 'login-title'}
@@ -100,10 +162,10 @@ export default function LoginPage() {
                     <BlurText
                       text={isRegister ? 'Create Account' : 'Log In'}
                       direction="top"
-                      className="font-serif text-2xl sm:text-3xl text-center text-terracotta-dark font-medium justify-center"
+                      className="font-serif text-3xl sm:text-4xl text-center text-terracotta-dark font-medium justify-center tracking-tight"
                     />
                   </div>
-                  <p className="text-xs text-terracotta-600 mt-1.5 font-light leading-relaxed">
+                  <p className="text-xs sm:text-sm text-terracotta-600 mt-2 font-light leading-relaxed">
                     {isRegister
                       ? 'Join Chhapa to save your favorites, custom sizes, and track orders.'
                       : 'Welcome back to Chhapa — continue your artisanal journey.'}
@@ -213,18 +275,44 @@ export default function LoginPage() {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Submit Button with press micro-interaction */}
-              <div className="pt-2">
-                <motion.button
-                  type="submit"
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                  className="w-full py-3.5 px-6 rounded-full bg-[#8B4520] hover:bg-[#703517] text-white font-medium text-sm tracking-wide transition-colors duration-200 shadow-md hover:shadow-lg shadow-terracotta/20 flex items-center justify-center space-x-2 cursor-pointer"
-                >
-                  <span>{isRegister ? 'Create Account' : 'Log In'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </motion.button>
+            {/* Error Message Alert */}
+            {errorMessage && (
+              <div className="mt-4 p-3.5 rounded-xl bg-red-50/90 border border-red-200/80 text-red-900 text-xs flex items-start space-x-2 animate-fadeIn">
+                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 font-medium">{errorMessage}</div>
               </div>
+            )}
+
+            {/* Success Message Alert */}
+            {successMessage && (
+              <div className="mt-4 p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200/80 text-emerald-900 text-xs flex items-start space-x-2 animate-fadeIn">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 font-medium">{successMessage}</div>
+              </div>
+            )}
+
+            {/* Submit Button with press micro-interaction */}
+            <div className="pt-2">
+              <motion.button
+                type="submit"
+                disabled={isSubmitting}
+                whileTap={isSubmitting ? {} : { scale: 0.97 }}
+                transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full py-3.5 px-6 rounded-full bg-[#8B4520] hover:bg-[#703517] disabled:opacity-60 text-white font-medium text-sm tracking-wide transition-colors duration-200 shadow-md hover:shadow-lg shadow-terracotta/20 flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{isRegister ? 'Creating Account...' : 'Signing In...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{isRegister ? 'Create Account' : 'Log In'}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </motion.button>
+            </div>
             </form>
 
             {/* Toggle Between Login & Signup */}

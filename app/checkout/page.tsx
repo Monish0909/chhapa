@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'motion/react';
+import { supabase } from '@/lib/supabase';
 import {
   SHIPPING_FEE,
   CHHAPA_UPI_ID,
@@ -112,7 +113,7 @@ export default function CheckoutPage() {
     setTimeout(() => setCopiedUpi(false), 2000);
   };
 
-  const onSubmit = (data: CheckoutFormData) => {
+  const onSubmit = async (data: CheckoutFormData) => {
     const orderPayload: SubmittedOrder = {
       orderId: `CHP-${Date.now().toString().slice(-6)}`,
       customer: data,
@@ -125,6 +126,31 @@ export default function CheckoutPage() {
     };
 
     console.log('=== CHHAPA NEW ORDER SUBMITTED ===', orderPayload);
+
+    try {
+      const { error } = await supabase.from('orders').insert({
+        customer_name: data.fullName,
+        phone: data.phone,
+        email: data.email,
+        address_line1: data.addressLine1,
+        address_line2: data.addressLine2 || '',
+        city: data.city,
+        state: data.state,
+        pincode: data.pincode,
+        items: cartItems,
+        subtotal,
+        shipping,
+        total,
+        status: 'pending_payment',
+      });
+
+      if (error) {
+        console.warn('Supabase order insert warning:', error.message);
+      }
+    } catch (err) {
+      console.error('Failed to persist order to Supabase:', err);
+    }
+
     setSubmittedOrder(orderPayload);
     clearCart();
   };
@@ -406,7 +432,7 @@ export default function CheckoutPage() {
             <div className="pt-2 text-[11px] text-terracotta-600 space-y-1">
               <p className="flex items-center">
                 <ShieldCheck className="w-3.5 h-3.5 mr-1.5 text-terracotta" />
-                <span>Zero synthetic chemicals · Hand-block guaranteed</span>
+                <span>Zero synthetic chemicals · Freehand brushcraft guaranteed</span>
               </p>
             </div>
           </div>
