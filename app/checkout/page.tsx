@@ -92,6 +92,7 @@ export default function CheckoutPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -107,6 +108,8 @@ export default function CheckoutPage() {
       saveInfo: false,
     },
   });
+
+  const liveForm = watch();
 
   const handleCopyUpi = () => {
     navigator.clipboard.writeText(CHHAPA_UPI_ID);
@@ -154,14 +157,46 @@ export default function CheckoutPage() {
     clearCart();
   };
 
-  // WhatsApp pre-filled message generator
-  const getWhatsAppUrl = (orderId?: string, orderTotal?: number) => {
-    const activeTotal = orderTotal ?? total;
-    const message = orderId
-      ? `Hi Chhapa, I have placed order ${orderId} for ₹${activeTotal.toLocaleString('en-IN')}. Sharing my payment screenshot here.`
-      : `Hi Chhapa, I am about to pay ₹${activeTotal.toLocaleString('en-IN')} via UPI and will share my payment screenshot here.`;
-    return `https://wa.me/${CHHAPA_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  // WhatsApp pre-filled message generator (full order details + product image links)
+  const buildWhatsAppMessage = (order: SubmittedOrder | null) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+    const imageUrl = (img: string) =>
+      !img ? '' : /^https?:\/\//i.test(img) ? img : `${origin}${img.startsWith('/') ? '' : '/'}${img}`;
+
+    const c = order ? order.customer : (liveForm as CheckoutFormData);
+    const items = order ? order.items : cartItems;
+    const sub = order ? order.subtotal : subtotal;
+    const ship = order ? order.shipping : shipping;
+    const tot = order ? order.total : total;
+
+    const lines: string[] = [];
+    lines.push(
+      order
+        ? `Hi Chhapa, I have placed order ${order.orderId}. Sharing my payment screenshot here.`
+        : 'Hi Chhapa, I am about to pay via UPI and will share my payment screenshot here.'
+    );
+    lines.push('', '*ORDER ITEMS*');
+    items.forEach((it, i) => {
+      lines.push(`${i + 1}. ${it.name}`);
+      lines.push(`   Size: ${it.size} | Qty: ${it.quantity ?? 1} | ${inr(it.price)}`);
+      const url = imageUrl(it.image);
+      if (url) lines.push(`   Image: ${url}`);
+    });
+    lines.push('', `Subtotal: ${inr(sub)}`, `Shipping: ${inr(ship)}`, `*Total: ${inr(tot)}*`);
+    lines.push('', '*CUSTOMER DETAILS*');
+    lines.push(`Name: ${c?.fullName || '-'}`, `Phone: ${c?.phone || '-'}`, `Email: ${c?.email || '-'}`);
+    lines.push('', '*SHIPPING ADDRESS*');
+    const addr = [c?.addressLine1, c?.addressLine2, c?.city, c?.state, c?.pincode]
+      .filter(Boolean)
+      .join(', ');
+    lines.push(addr || '-');
+    lines.push('', `Paid via UPI to ${CHHAPA_UPI_ID}`);
+    return lines.join('\n');
   };
+
+  const getWhatsAppUrl = (order?: SubmittedOrder | null) =>
+    `https://wa.me/${CHHAPA_WHATSAPP_NUMBER}?text=${encodeURIComponent(buildWhatsAppMessage(order ?? null))}`;
 
   // UPI deep link (opens the customer's UPI app on mobile)
   const getUpiUrl = (orderId: string, orderTotal: number) => {
@@ -271,7 +306,7 @@ export default function CheckoutPage() {
               {/* WhatsApp Action Button */}
               <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3">
                 <a
-                  href={getWhatsAppUrl(submittedOrder.orderId, submittedOrder.total)}
+                  href={getWhatsAppUrl(submittedOrder)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white font-medium text-sm tracking-wide transition-all duration-200 shadow-md hover:shadow-lg shadow-green-600/20 active:scale-[0.99]"
@@ -866,7 +901,7 @@ export default function CheckoutPage() {
                   className="w-full inline-flex items-center justify-center py-3 px-5 rounded-xl bg-white/70 hover:bg-white text-emerald-800 border border-emerald-300 font-medium text-xs sm:text-sm tracking-wide transition-all shadow-sm hover:shadow"
                 >
                   <MessageCircle className="w-4 h-4 mr-2 text-emerald-600" />
-                  <span>WhatsApp Us (Pre-fill order message of ₹{total.toLocaleString('en-IN')})</span>
+                  <span>WhatsApp Us (order details pre-filled)</span>
                 </a>
               </div>
 
