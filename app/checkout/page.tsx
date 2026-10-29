@@ -22,6 +22,7 @@ import { supabase } from '@/lib/supabase';
 import {
   SHIPPING_FEE,
   CHHAPA_UPI_ID,
+  CHHAPA_UPI_PAYEE_NAME,
   CHHAPA_WHATSAPP_NUMBER,
   CHHAPA_WHATSAPP_DISPLAY,
   INDIAN_STATES,
@@ -125,8 +126,6 @@ export default function CheckoutPage() {
       createdAt: new Date().toISOString(),
     };
 
-    console.log('=== CHHAPA NEW ORDER SUBMITTED ===', orderPayload);
-
     try {
       const { error } = await supabase.from('orders').insert({
         customer_name: data.fullName,
@@ -145,10 +144,10 @@ export default function CheckoutPage() {
       });
 
       if (error) {
-        console.warn('Supabase order insert warning:', error.message);
+        // order insert failed; confirmation still shown so customer can pay via WhatsApp
       }
-    } catch (err) {
-      console.error('Failed to persist order to Supabase:', err);
+    } catch {
+      // swallow: do not log customer data
     }
 
     setSubmittedOrder(orderPayload);
@@ -158,11 +157,22 @@ export default function CheckoutPage() {
   // WhatsApp pre-filled message generator
   const getWhatsAppUrl = (orderId?: string, orderTotal?: number) => {
     const activeTotal = orderTotal ?? total;
-    const refText = orderId ? ` for Order ID: ${orderId}` : '';
-    const message = `Hello Chhapa Team, I am sharing my UPI payment screenshot of ₹${activeTotal.toLocaleString(
-      'en-IN'
-    )}${refText}. Please confirm my order!`;
+    const message = orderId
+      ? `Hi Chhapa, I have placed order ${orderId} for ₹${activeTotal.toLocaleString('en-IN')}. Sharing my payment screenshot here.`
+      : `Hi Chhapa, I am about to pay ₹${activeTotal.toLocaleString('en-IN')} via UPI and will share my payment screenshot here.`;
     return `https://wa.me/${CHHAPA_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  };
+
+  // UPI deep link (opens the customer's UPI app on mobile)
+  const getUpiUrl = (orderId: string, orderTotal: number) => {
+    const params = new URLSearchParams({
+      pa: CHHAPA_UPI_ID,
+      pn: CHHAPA_UPI_PAYEE_NAME,
+      am: orderTotal.toFixed(2),
+      cu: 'INR',
+      tn: orderId,
+    });
+    return `upi://pay?${params.toString().replace(/\+/g, '%20')}`;
   };
 
   if (!mounted) {
@@ -246,6 +256,16 @@ export default function CheckoutPage() {
                   </button>
                 </div>
                 {copiedUpi && <span className="text-[11px] text-green-700">Copied to clipboard!</span>}
+              </div>
+
+              {/* Mobile-only: pay directly in a UPI app */}
+              <div className="md:hidden">
+                <a
+                  href={getUpiUrl(submittedOrder.orderId, submittedOrder.total)}
+                  className="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-[#8B4520] hover:bg-[#703517] text-white font-medium text-sm tracking-wide transition-all shadow-md"
+                >
+                  <span>Pay ₹{submittedOrder.total.toLocaleString('en-IN')} with UPI app</span>
+                </a>
               </div>
 
               {/* WhatsApp Action Button */}
@@ -773,7 +793,7 @@ export default function CheckoutPage() {
                 {/* QR Container */}
                 <div className="w-40 h-40 sm:w-44 sm:h-44 rounded-2xl overflow-hidden bg-white p-3 border border-terracotta/20 shadow-md flex-shrink-0 flex flex-col items-center justify-center">
                   <img
-                    src="/upi-qr-placeholder.png"
+                    src="/upi-qr.png"
                     alt="Scan to pay via UPI"
                     className="w-full h-full object-contain"
                   />
