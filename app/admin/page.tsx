@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Package, ShoppingCart, ArrowRight, Clock, Plus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getProducts, MockProduct } from '@/lib/products';
+import StoreAnalytics, { AnalyticsOrder } from '@/components/admin/StoreAnalytics';
 
 interface RecentOrder {
   id: string;
@@ -20,6 +21,7 @@ export default function AdminDashboardPage() {
   const [totalOrders, setTotalOrders] = useState<number>(0);
   const [pendingOrders, setPendingOrders] = useState<number>(0);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [allOrders, setAllOrders] = useState<AnalyticsOrder[]>([]);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -36,6 +38,7 @@ export default function AdminDashboardPage() {
           .order('created_at', { ascending: false });
 
         if (!ordersError && ordersData) {
+          setAllOrders(ordersData as AnalyticsOrder[]);
           setTotalOrders(ordersData.length);
           const pending = ordersData.filter((o: { status?: string }) => {
             const s = (o.status || '').toLowerCase();
@@ -195,6 +198,8 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      {!loading && <StoreAnalytics orders={allOrders} />}
 
       {/* Navigation Shortcuts Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
