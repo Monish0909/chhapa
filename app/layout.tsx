@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 import './globals.css';
+import { Analytics } from '@vercel/analytics/next';
 import SmoothScroll from '@/components/providers/SmoothScroll';
 import { GlassNav } from '@/components/nav/GlassNav';
 import { CartDrawer } from '@/components/cart/CartDrawer';
@@ -48,6 +49,7 @@ export default function RootLayout({
           <GlassNav />
           <CartDrawer />
           <main>{children}</main>
+          <Analytics />
         </SmoothScroll>
       </body>
     </html>
