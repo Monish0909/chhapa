@@ -199,7 +199,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {!loading && <StoreAnalytics orders={allOrders} />}
+      {!loading && <StoreAnalytics orders={allOrders} products={products} />}
 
       {/* Navigation Shortcuts Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
