@@ -109,8 +109,65 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {/* Products Table */}
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+      {/* Products - mobile cards */}
+      <div className="md:hidden space-y-3">
+        {!isMounted || loading ? (
+          <p className="py-8 text-center text-slate-400 text-sm">Loading products...</p>
+        ) : products.length === 0 ? (
+          <p className="py-8 text-center text-slate-500 text-sm">
+            No products found. Tap &quot;Add New Product&quot; to create one.
+          </p>
+        ) : (
+          products.map((product) => (
+            <div key={product.id} className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 flex gap-3">
+              <div className="w-16 h-20 rounded bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+                {product.images?.[0] ? (
+                  <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[10px] text-slate-400 font-mono">None</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0 space-y-2">
+                <div>
+                  <p className="font-medium text-slate-900 text-sm leading-snug">{product.name}</p>
+                  <p className="text-xs text-slate-500 capitalize">
+                    {product.category} · ₹{product.price.toLocaleString('en-IN')}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleSold(product.id)}
+                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                      product.sold
+                        ? 'bg-slate-100 text-slate-700 border-slate-300'
+                        : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    }`}
+                  >
+                    {product.sold ? 'Sold' : 'Available'}
+                  </button>
+                  <Link
+                    href={`/admin/products/${product.id}/edit`}
+                    className="inline-flex items-center px-3 py-1.5 rounded border border-slate-200 bg-white text-slate-700 text-xs font-medium"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(product.id, product.name)}
+                    className="inline-flex items-center px-3 py-1.5 rounded border border-red-200 bg-red-50 text-red-700 text-xs font-medium"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Products Table (desktop) */}
+      <div className="hidden md:block bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-700">
             <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold uppercase text-slate-500 tracking-wider">

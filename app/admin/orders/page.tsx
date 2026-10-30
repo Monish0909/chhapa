@@ -176,8 +176,62 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+      {/* Orders - mobile cards */}
+      <div className="md:hidden space-y-3">
+        {!isMounted || loading ? (
+          <p className="py-8 text-center text-slate-400 text-sm">Loading orders...</p>
+        ) : orders.length === 0 ? (
+          <p className="py-8 text-center text-slate-500 text-sm">No orders found in the database.</p>
+        ) : (
+          orders.map((order) => {
+            const badge = statusStyles[order.status];
+            const canMarkPaid = order.status === 'Pending' || order.status === 'Awaiting WhatsApp confirmation';
+            return (
+              <div key={order.id} className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-mono font-semibold text-slate-900 text-sm">{order.orderNumber}</p>
+                    <p className="text-sm text-slate-800 truncate">{order.customerName}</p>
+                    <a href={`tel:${order.customerPhone}`} className="text-xs text-slate-500 font-mono">
+                      {order.customerPhone}
+                    </a>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-semibold text-slate-900">₹{order.total.toLocaleString('en-IN')}</p>
+                    <p className="text-[11px] text-slate-500">{order.date}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">{order.items}</p>
+                <div className="flex items-center gap-2">
+                  {canMarkPaid && (
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange(order.id, 'Payment Received')}
+                      className="flex-1 text-sm font-semibold py-2.5 rounded-md bg-emerald-600 active:bg-emerald-700 text-white"
+                    >
+                      Mark as paid
+                    </button>
+                  )}
+                  <select
+                    value={order.status}
+                    onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
+                    className={`${canMarkPaid ? 'flex-1' : 'w-full'} text-sm font-medium px-2.5 py-2.5 rounded-md border ${badge.bg} ${badge.text} ${badge.border}`}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Awaiting WhatsApp confirmation">Awaiting WhatsApp confirmation</option>
+                    <option value="Payment Received">Payment Received</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                  </select>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Orders Table (desktop) */}
+      <div className="hidden md:block bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-700">
             <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold uppercase text-slate-500 tracking-wider">
