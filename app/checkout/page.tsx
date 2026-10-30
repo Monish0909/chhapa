@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
+import { QRCodeSVG } from 'qrcode.react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -281,8 +282,14 @@ export default function CheckoutPage() {
               </div>
 
               <div className="hidden md:flex flex-col items-center space-y-3">
-                <div className="w-48 h-48 rounded-2xl bg-white p-3 border border-terracotta/20 shadow-md">
-                  <img src="/upi-qr.png" alt="Scan to pay via UPI" className="w-full h-full object-contain" />
+                <div className="rounded-2xl bg-white p-4 border border-terracotta/20 shadow-md">
+                  <QRCodeSVG
+                    value={getUpiUrl(submittedOrder.orderId, submittedOrder.total)}
+                    size={192}
+                    level="M"
+                    marginSize={0}
+                    title="Scan to pay via UPI"
+                  />
                 </div>
                 <p className="text-xs text-terracotta-dark/80">
                   Scan with any UPI app to pay ₹{submittedOrder.total.toLocaleString('en-IN')}
