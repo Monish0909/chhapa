@@ -24,7 +24,6 @@ import {
   CHHAPA_UPI_ID,
   CHHAPA_UPI_PAYEE_NAME,
   CHHAPA_WHATSAPP_NUMBER,
-  CHHAPA_WHATSAPP_DISPLAY,
   INDIAN_STATES,
 } from '@/lib/constants';
 
@@ -841,7 +840,7 @@ export default function CheckoutPage() {
                   <span>Place Order (₹{total.toLocaleString('en-IN')})</span>
                 </button>
                 <p className="text-center text-[11px] text-terracotta-600 mt-2 font-light">
-                  You'll pay on the next step.
+                  You&apos;ll pay on the next step.
                 </p>
               </div>
             </div>
