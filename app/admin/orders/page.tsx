@@ -171,7 +171,7 @@ export default function AdminOrdersPage() {
         <div className="space-y-1">
           <p className="font-semibold">Manual UPI Workflow Note</p>
           <p className="text-amber-800 text-xs leading-relaxed">
-            Customers pay by scanning the QR code and message their screenshot to WhatsApp ({CHHAPA_WHATSAPP_NUMBER}). Orders with status &quot;Awaiting WhatsApp confirmation&quot; require matching transaction IDs before moving to &quot;Payment Received&quot;.
+            Customers pay via UPI after placing an order. Check the payment in your UPI app (match the amount and the customer name or time), then click &quot;Mark as paid&quot;. Customers may also send a screenshot on WhatsApp ({CHHAPA_WHATSAPP_NUMBER}).
           </p>
         </div>
       </div>
@@ -249,6 +249,15 @@ export default function AdminOrdersPage() {
                     {/* Status Dropdown */}
                     <td className="py-3.5 px-4">
                       <div className="flex items-center space-x-2">
+                        {(order.status === 'Pending' || order.status === 'Awaiting WhatsApp confirmation') && (
+                          <button
+                            type="button"
+                            onClick={() => handleStatusChange(order.id, 'Payment Received')}
+                            className="text-xs font-semibold px-2.5 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white whitespace-nowrap transition-colors"
+                          >
+                            Mark as paid
+                          </button>
+                        )}
                         <select
                           value={order.status}
                           onChange={(e) =>

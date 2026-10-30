@@ -268,59 +268,56 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Quick Manual UPI Reminder Card */}
-              <div className="max-w-md mx-auto p-4 rounded-xl bg-terracotta-50/70 border border-terracotta/20 flex flex-col items-center space-y-3">
-                <span className="text-xs font-semibold text-terracotta uppercase tracking-wider">
-                  UPI ID for payment
-                </span>
-                <div className="flex items-center space-x-2 bg-white/70 px-4 py-2 rounded-lg border border-terracotta/15">
-                  <span className="font-mono text-sm font-medium text-terracotta-dark">
-                    {CHHAPA_UPI_ID}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleCopyUpi}
-                    className="text-terracotta hover:text-terracotta-600 transition-colors p-1"
-                    title="Copy UPI ID"
-                  >
-                    {copiedUpi ? (
-                      <Check className="w-4 h-4 text-green-700" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-                {copiedUpi && <span className="text-[11px] text-green-700">Copied to clipboard!</span>}
-              </div>
-
-              {/* Mobile-only: pay directly in a UPI app */}
+              {/* Pay: phone = UPI app button, desktop = QR */}
               <div className="md:hidden">
                 <a
                   href={getUpiUrl(submittedOrder.orderId, submittedOrder.total)}
-                  className="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-[#8B4520] hover:bg-[#703517] text-white font-medium text-sm tracking-wide transition-all shadow-md"
+                  className="w-full inline-flex items-center justify-center px-8 py-4 rounded-full bg-[#8B4520] hover:bg-[#703517] text-white font-medium text-base tracking-wide transition-all shadow-md"
                 >
-                  <span>Pay ₹{submittedOrder.total.toLocaleString('en-IN')} with UPI app</span>
+                  <span>Pay ₹{submittedOrder.total.toLocaleString('en-IN')} with UPI</span>
                 </a>
+                <p className="text-[11px] text-terracotta-600 mt-2">
+                  Opens Google Pay, PhonePe, Paytm or any UPI app.
+                </p>
               </div>
 
-              {/* WhatsApp Action Button */}
-              <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3">
+              <div className="hidden md:flex flex-col items-center space-y-3">
+                <div className="w-48 h-48 rounded-2xl bg-white p-3 border border-terracotta/20 shadow-md">
+                  <img src="/upi-qr.png" alt="Scan to pay via UPI" className="w-full h-full object-contain" />
+                </div>
+                <p className="text-xs text-terracotta-dark/80">
+                  Scan with any UPI app to pay ₹{submittedOrder.total.toLocaleString('en-IN')}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleCopyUpi}
+                  className="inline-flex items-center space-x-2 text-xs text-terracotta hover:text-terracotta-600"
+                >
+                  <span className="font-mono">{CHHAPA_UPI_ID}</span>
+                  {copiedUpi ? <Check className="w-3.5 h-3.5 text-green-700" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+
+              <p className="text-xs text-terracotta-dark/80">
+                We&apos;ll confirm your order as soon as we see your payment.
+              </p>
+
+              <div className="pt-1 flex flex-col sm:flex-row justify-center items-center gap-3">
+                <Link
+                  href="/shop"
+                  className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-cream-100 hover:bg-cream-200 text-terracotta-dark border border-terracotta/20 font-medium text-sm tracking-wide transition-all duration-200"
+                >
+                  <span>Return to Shop</span>
+                </Link>
                 <a
                   href={getWhatsAppUrl(submittedOrder)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white font-medium text-sm tracking-wide transition-all duration-200 shadow-md hover:shadow-lg shadow-green-600/20 active:scale-[0.99]"
+                  className="inline-flex items-center text-xs text-terracotta-600 hover:text-terracotta underline underline-offset-2"
                 >
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  <span>Send Screenshot on WhatsApp</span>
+                  <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+                  <span>Already paid? Send us the screenshot</span>
                 </a>
-
-                <Link
-                  href="/shop"
-                  className="inline-flex items-center justify-center px-6 py-3.5 rounded-full bg-cream-100 hover:bg-cream-200 text-terracotta-dark border border-terracotta/20 font-medium text-sm tracking-wide transition-all duration-200"
-                >
-                  <span>Return to Shop</span>
-                </Link>
               </div>
             </div>
           </motion.div>
@@ -823,86 +820,15 @@ export default function CheckoutPage() {
                 </h2>
               </div>
 
-              {/* QR Code and UPI ID */}
-              <div className="flex flex-col sm:flex-row items-center gap-6 p-5 sm:p-6 rounded-2xl bg-white/45 border border-terracotta/15">
-                {/* QR Container */}
-                <div className="w-40 h-40 sm:w-44 sm:h-44 rounded-2xl overflow-hidden bg-white p-3 border border-terracotta/20 shadow-md flex-shrink-0 flex flex-col items-center justify-center">
-                  <img
-                    src="/upi-qr.png"
-                    alt="Scan to pay via UPI"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-
-                {/* QR Text & Copyable UPI */}
-                <div className="flex-1 text-center sm:text-left space-y-2.5">
-                  <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-terracotta-50 text-[11px] font-semibold text-terracotta border border-terracotta/20">
-                    <QrCode className="w-3.5 h-3.5" />
-                    <span>Instant Direct UPI</span>
-                  </div>
-
-                  <h3 className="font-serif text-lg font-medium text-terracotta-dark">
-                    Scan to pay via UPI
-                  </h3>
-
-                  <p className="text-xs text-terracotta-dark/80 font-light">
-                    Scan this QR using any UPI app (Google Pay, PhonePe, Paytm, BHIM) to transfer the order total:
-                  </p>
-
-                  {/* UPI ID box with copy button */}
-                  <div className="pt-1">
-                    <div className="inline-flex items-center space-x-3 px-3.5 py-2 rounded-xl bg-white/70 border border-terracotta/20 shadow-sm">
-                      <div>
-                        <span className="text-[10px] uppercase tracking-wider text-terracotta-500 font-semibold block">
-                          UPI ID
-                        </span>
-                        <span className="font-mono text-sm font-semibold text-terracotta-dark">
-                          {CHHAPA_UPI_ID}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleCopyUpi}
-                        className="p-1.5 rounded-lg hover:bg-terracotta/10 text-terracotta transition-colors"
-                        title="Copy UPI ID"
-                      >
-                        {copiedUpi ? (
-                          <Check className="w-4 h-4 text-green-700" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                    {copiedUpi && (
-                      <span className="block text-[11px] text-green-700 mt-1">
-                        Copied UPI ID to clipboard!
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Instructions Text */}
-              <div className="p-4 rounded-xl bg-terracotta/5 border border-terracotta/10 text-xs text-terracotta-dark/85 leading-relaxed space-y-1">
-                <p className="font-medium text-terracotta">Payment Verification:</p>
-                <p>
-                  After completing payment, please send a screenshot of your payment confirmation to our WhatsApp number{' '}
-                  <strong className="font-semibold text-terracotta-dark">{CHHAPA_WHATSAPP_DISPLAY}</strong>{' '}
-                  along with your order details. Your order will be confirmed once payment is verified.
+              <div className="p-4 rounded-xl bg-white/45 border border-terracotta/15 text-sm text-terracotta-dark/90 space-y-1">
+                <p className="font-medium text-terracotta-dark flex items-center">
+                  <QrCode className="w-4 h-4 mr-2 text-terracotta" />
+                  Pay by UPI
                 </p>
-              </div>
-
-              {/* WhatsApp Us Button */}
-              <div>
-                <a
-                  href={getWhatsAppUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center py-3 px-5 rounded-xl bg-white/70 hover:bg-white text-emerald-800 border border-emerald-300 font-medium text-xs sm:text-sm tracking-wide transition-all shadow-sm hover:shadow"
-                >
-                  <MessageCircle className="w-4 h-4 mr-2 text-emerald-600" />
-                  <span>WhatsApp Us (order details pre-filled)</span>
-                </a>
+                <p className="text-xs leading-relaxed">
+                  Place your order first. On the next screen you can pay ₹{total.toLocaleString('en-IN')} with any UPI app
+                  (Google Pay, PhonePe, Paytm, BHIM).
+                </p>
               </div>
 
               {/* Final Place Order Button */}
@@ -915,7 +841,7 @@ export default function CheckoutPage() {
                   <span>Place Order (₹{total.toLocaleString('en-IN')})</span>
                 </button>
                 <p className="text-center text-[11px] text-terracotta-600 mt-2 font-light">
-                  ✦ Clicking Place Order logs your details and provides your order confirmation receipt.
+                  You'll pay on the next step.
                 </p>
               </div>
             </div>
