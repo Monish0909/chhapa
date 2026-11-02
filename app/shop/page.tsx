@@ -8,7 +8,7 @@ import { BotanicalWatermark } from '@/components/ui/BotanicalWatermark';
 import { getProducts, MockProduct } from '@/lib/products';
 import { SlidersHorizontal, ArrowUpDown, X, Sparkles } from 'lucide-react';
 
-type CategoryFilter = 'All' | 'Women' | 'Boy' | 'Girl';
+type CategoryFilter = 'All' | 'Women' | 'Boy' | 'Girl' | 'Accessories';
 type SortOption = 'Newest' | 'Price: Low to High' | 'Price: High to Low';
 
 export default function ShopPage() {
@@ -22,6 +22,7 @@ export default function ShopPage() {
     if (param === 'women') setSelectedCategory('Women');
     else if (param === 'boy') setSelectedCategory('Boy');
     else if (param === 'girl') setSelectedCategory('Girl');
+    else if (param === 'accessories') setSelectedCategory('Accessories');
   }, []);
   const [selectedSize, setSelectedSize] = useState<string>('All');
   const [selectedSort, setSelectedSort] = useState<SortOption>('Newest');
@@ -192,7 +193,7 @@ export default function ShopPage() {
               <SlidersHorizontal className="w-3.5 h-3.5 mr-1.5 text-terracotta" />
               Category:
             </span>
-            {(['All', 'Women', 'Boy', 'Girl'] as CategoryFilter[]).map((category) => {
+            {(['All', 'Women', 'Boy', 'Girl', 'Accessories'] as CategoryFilter[]).map((category) => {
               const isActive = selectedCategory === category;
               return (
                 <button

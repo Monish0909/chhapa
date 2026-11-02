@@ -70,7 +70,13 @@ export default function AdminEditProductPage() {
         if (isMounted) {
           const rawCategory = (data.category || '').toLowerCase();
           const categoryDisplay =
-            rawCategory === 'boy' ? 'Boy' : rawCategory === 'girl' || rawCategory === 'kids' ? 'Girl' : 'Women';
+            rawCategory === 'boy'
+              ? 'Boy'
+              : rawCategory === 'girl' || rawCategory === 'kids'
+              ? 'Girl'
+              : rawCategory === 'accessories'
+              ? 'Accessories'
+              : 'Women';
 
           setFormData({
             name: data.name || '',
@@ -337,6 +343,7 @@ export default function AdminEditProductPage() {
                 <option value="Women">Women</option>
                 <option value="Boy">Boy</option>
                 <option value="Girl">Girl</option>
+                <option value="Accessories">Accessories</option>
               </select>
             </div>
           </div>

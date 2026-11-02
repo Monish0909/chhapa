@@ -197,6 +197,7 @@ export default function AdminNewProductPage() {
                 <option value="Women">Women</option>
                 <option value="Boy">Boy</option>
                 <option value="Girl">Girl</option>
+                <option value="Accessories">Accessories</option>
               </select>
             </div>
           </div>
