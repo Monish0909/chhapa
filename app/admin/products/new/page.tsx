@@ -38,7 +38,7 @@ export default function AdminNewProductPage() {
     setErrorMessage(null);
 
     const priceNum = parseFloat(formData.price) || 0;
-    const shipsDaysNum = parseInt(formData.shipsInDays.replace(/[^0-9]/g, '')) || 7;
+    const shipsDaysNum = Math.max(0, ...(formData.shipsInDays.match(/\d+/g) || []).map(Number)) || 7;
     if (sizes.length === 0) {
       setErrorMessage('Please select at least one size.');
       setIsSubmitting(false);

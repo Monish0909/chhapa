@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Check, Ruler, Truck, ShieldCheck, Sparkles } from 'lucide-react';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { SizeChartModal } from '@/components/product/SizeChartModal';
+import { sortSizes } from '@/lib/sizes';
 import { ProductAccordion, AccordionSection } from '@/components/product/ProductAccordion';
 import { useCartStore } from '@/lib/store';
 import { getProductBySlug, MockProduct } from '@/lib/products';
@@ -42,6 +43,8 @@ export default function ProductDetailPage({ params }: PageProps) {
   }, [slug]);
 
   const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [sizeError, setSizeError] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
   const pulseCart = useCartStore((state) => state.pulseCart);
@@ -58,12 +61,19 @@ export default function ProductDetailPage({ params }: PageProps) {
   const handleAddToCart = () => {
     if (!productData || productData.sold) return;
 
+    const sizeOptions = productData.sizes?.length ? productData.sizes : ['One Size'];
+    const chosen = selectedSize ?? (sizeOptions.length === 1 ? sizeOptions[0] : null);
+    if (!chosen) {
+      setSizeError(true);
+      return;
+    }
+
     addItem({
       productId: productData.id,
       name: productData.name,
       price: productData.price,
       image: productData.images[0] || '',
-      size: productData.sizeChart?.[0]?.size || 'One Size',
+      size: chosen,
       quantity: 1,
     });
 
@@ -258,6 +268,54 @@ export default function ProductDetailPage({ params }: PageProps) {
                 (Inclusive of all taxes)
               </span>
             </div>
+
+            {/* Size selector */}
+            {(() => {
+              const options = sortSizes(productData.sizes?.length ? productData.sizes : ['One Size']);
+              if (options.length === 1 && options[0] === 'One Size') return null;
+              return (
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-terracotta-dark">
+                      Select Size
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsSizeChartOpen(true)}
+                      className="text-[11px] text-terracotta hover:text-terracotta-600 underline underline-offset-2"
+                    >
+                      Size guide
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {options.map((sz) => {
+                      const active = selectedSize === sz;
+                      return (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => {
+                            setSelectedSize(sz);
+                            setSizeError(false);
+                          }}
+                          aria-pressed={active}
+                          className={`min-w-[3.25rem] px-4 py-2.5 rounded-xl text-sm font-medium border transition-all active:scale-95 ${
+                            active
+                              ? 'bg-[#8B4520] text-white border-[#8B4520] shadow-md'
+                              : 'bg-white/50 text-terracotta-dark border-terracotta/25 hover:border-terracotta/60'
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {sizeError && (
+                    <p className="text-xs text-red-600 mt-2">Please select a size to continue.</p>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Interactive Callout Boxes: Size Guide & Ships-In */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
