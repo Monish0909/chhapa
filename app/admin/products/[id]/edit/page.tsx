@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import ImageUploader from '@/components/admin/ImageUploader';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, AlertCircle, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function AdminEditProductPage() {
@@ -20,8 +21,8 @@ export default function AdminEditProductPage() {
     shipsInDays: '7-10 days',
   });
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>([]);
+  const [imagesBusy, setImagesBusy] = useState(false);
   const [sold, setSold] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -90,11 +91,9 @@ export default function AdminEditProductPage() {
           setSold(Boolean(data.sold));
 
           if (Array.isArray(data.images) && data.images.length > 0) {
-            setExistingImages(data.images);
-            setImagePreview(data.images[0]);
+            setImages(data.images);
           } else {
-            setExistingImages([]);
-            setImagePreview(null);
+            setImages([]);
           }
         }
       } catch (err) {
@@ -123,14 +122,6 @@ export default function AdminEditProductPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -139,18 +130,12 @@ export default function AdminEditProductPage() {
     const priceNum = parseFloat(formData.price) || 0;
     const shipsDaysNum = parseInt(formData.shipsInDays.replace(/[^0-9]/g, '')) || 7;
     
-    // Determine images array
-    let imagesArray: string[];
-    if (imagePreview) {
-      // If imagePreview is still the first existing image, keep existing images
-      if (existingImages.length > 0 && imagePreview === existingImages[0]) {
-        imagesArray = existingImages;
-      } else {
-        imagesArray = [imagePreview];
-      }
-    } else {
-      imagesArray = existingImages.length > 0 ? existingImages : ['/frames/home/frame_0001.jpg'];
+    if (imagesBusy) {
+      setErrorMessage('Please wait for the images to finish uploading.');
+      setIsSubmitting(false);
+      return;
     }
+    const imagesArray = images.length > 0 ? images : ['/frames/home/frame_0001.jpg'];
 
     const categoryLower = formData.category.toLowerCase();
 
@@ -401,59 +386,12 @@ export default function AdminEditProductPage() {
           </div>
         </div>
 
-        {/* Image Upload with Preview */}
+        {/* Product Images (multiple) */}
         <div className="space-y-4 pt-2">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600 border-b border-slate-100 pb-2">
             3. Product Imagery
           </h2>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Primary Photo
-            </label>
-            <div className="mt-1 flex items-center gap-4">
-              {/* File Input */}
-              <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-md text-xs font-medium shadow-sm transition-colors">
-                <Upload className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
-                <span>Replace Image</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </label>
-              <span className="text-xs text-slate-500">
-                {imagePreview ? 'Photo selected' : 'PNG, JPG, WebP supported'}
-              </span>
-            </div>
-
-            {/* Preview Box */}
-            <div className="mt-3">
-              {imagePreview ? (
-                <div className="relative w-36 aspect-[3/4] rounded-lg overflow-hidden border border-slate-300 bg-slate-100 shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setImagePreview(null)}
-                    className="absolute top-1 right-1 bg-black/70 hover:bg-black text-white text-[10px] px-1.5 py-0.5 rounded"
-                  >
-                    Clear
-                  </button>
-                </div>
-              ) : (
-                <div className="w-36 aspect-[3/4] rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center text-slate-400">
-                  <ImageIcon className="w-8 h-8 stroke-[1.2] mb-1 text-slate-300" />
-                  <span className="text-[11px]">No preview</span>
-                </div>
-              )}
-            </div>
-          </div>
+          <ImageUploader images={images} onChange={setImages} onBusyChange={setImagesBusy} />
         </div>
 
         {/* Submit & Cancel Buttons */}
