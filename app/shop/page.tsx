@@ -6,6 +6,7 @@ import { ProductCard } from '@/components/product/ProductCard';
 import BlurText from '@/components/ui/BlurText';
 import { BotanicalWatermark } from '@/components/ui/BotanicalWatermark';
 import { getProducts, MockProduct } from '@/lib/products';
+import { SIZE_OPTIONS } from '@/lib/sizes';
 import { SlidersHorizontal, ArrowUpDown, X, Sparkles } from 'lucide-react';
 
 type CategoryFilter = 'All' | 'Women' | 'Boy' | 'Girl' | 'Accessories';
@@ -42,13 +43,11 @@ export default function ShopPage() {
       });
   }, []);
 
-  // Compute all available unique sizes across the catalog for the size filter pills
+  // Size filter: always offer XS to 3XL, plus "One Size" if any product uses it
   const availableSizes = useMemo(() => {
-    const sizeSet = new Set<string>();
-    products.forEach((product) => {
-      product.sizes?.forEach((sz) => sizeSet.add(sz));
-    });
-    return Array.from(sizeSet);
+    const list: string[] = [...SIZE_OPTIONS];
+    if (products.some((p) => p.sizes?.includes('One Size'))) list.push('One Size');
+    return list;
   }, [products]);
 
   // Filter and sort products reactively

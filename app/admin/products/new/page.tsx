@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import ImageUploader from '@/components/admin/ImageUploader';
+import SizePicker from '@/components/admin/SizePicker';
+import { DEFAULT_SIZES, buildSizeChart } from '@/lib/sizes';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -17,6 +19,7 @@ export default function AdminNewProductPage() {
   });
 
   const [images, setImages] = useState<string[]>([]);
+  const [sizes, setSizes] = useState<string[]>(DEFAULT_SIZES);
   const [imagesBusy, setImagesBusy] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,6 +39,11 @@ export default function AdminNewProductPage() {
 
     const priceNum = parseFloat(formData.price) || 0;
     const shipsDaysNum = parseInt(formData.shipsInDays.replace(/[^0-9]/g, '')) || 7;
+    if (sizes.length === 0) {
+      setErrorMessage('Please select at least one size.');
+      setIsSubmitting(false);
+      return;
+    }
     if (imagesBusy) {
       setErrorMessage('Please wait for the images to finish uploading.');
       setIsSubmitting(false);
@@ -50,12 +58,7 @@ export default function AdminNewProductPage() {
         price: priceNum,
         category: categoryLower,
         images: imagesArray,
-        size_chart: [
-          { size: 'S', measurements: { Chest: '38"', Waist: '34"', Length: '28"' } },
-          { size: 'M', measurements: { Chest: '40"', Waist: '36"', Length: '29"' } },
-          { size: 'L', measurements: { Chest: '42"', Waist: '38"', Length: '30"' } },
-          { size: 'XL', measurements: { Chest: '44"', Waist: '40"', Length: '31"' } },
-        ],
+        size_chart: buildSizeChart(sizes),
         ships_in_days: shipsDaysNum,
         sold: false,
         fabric_care: formData.fabricCare || 'Crafted from 100% natural organic cotton. Gentle cold handwash.',
@@ -131,6 +134,7 @@ export default function AdminNewProductPage() {
                   shipsInDays: '7-10 days',
                 });
                 setImages([]);
+                setSizes(DEFAULT_SIZES);
               }}
               className="px-3 py-1.5 bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-800 rounded text-xs font-medium transition-colors"
             >
@@ -253,6 +257,8 @@ export default function AdminNewProductPage() {
             />
           </div>
         </div>
+
+        <SizePicker value={sizes} onChange={setSizes} />
 
         {/* Product Images (multiple) */}
         <div className="space-y-4 pt-2">

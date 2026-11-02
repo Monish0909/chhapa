@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ImageUploader from '@/components/admin/ImageUploader';
+import SizePicker from '@/components/admin/SizePicker';
+import { DEFAULT_SIZES, buildSizeChart } from '@/lib/sizes';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -22,6 +24,8 @@ export default function AdminEditProductPage() {
   });
 
   const [images, setImages] = useState<string[]>([]);
+  const [sizes, setSizes] = useState<string[]>(DEFAULT_SIZES);
+  const [sizeChart, setSizeChart] = useState<Array<{ size?: string; measurements?: Record<string, string> }>>([]);
   const [imagesBusy, setImagesBusy] = useState(false);
   const [sold, setSold] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,6 +93,10 @@ export default function AdminEditProductPage() {
           });
 
           setSold(Boolean(data.sold));
+          if (Array.isArray(data.size_chart) && data.size_chart.length > 0) {
+            setSizeChart(data.size_chart);
+            setSizes(data.size_chart.map((c: { size?: string }) => c.size).filter(Boolean) as string[]);
+          }
 
           if (Array.isArray(data.images) && data.images.length > 0) {
             setImages(data.images);
@@ -130,6 +138,11 @@ export default function AdminEditProductPage() {
     const priceNum = parseFloat(formData.price) || 0;
     const shipsDaysNum = parseInt(formData.shipsInDays.replace(/[^0-9]/g, '')) || 7;
     
+    if (sizes.length === 0) {
+      setErrorMessage('Please select at least one size.');
+      setIsSubmitting(false);
+      return;
+    }
     if (imagesBusy) {
       setErrorMessage('Please wait for the images to finish uploading.');
       setIsSubmitting(false);
@@ -147,6 +160,7 @@ export default function AdminEditProductPage() {
           price: priceNum,
           category: categoryLower,
           images: imagesArray,
+          size_chart: buildSizeChart(sizes, sizeChart),
           ships_in_days: shipsDaysNum,
           fabric_care: formData.fabricCare,
           details: formData.description,
@@ -385,6 +399,8 @@ export default function AdminEditProductPage() {
             />
           </div>
         </div>
+
+        <SizePicker value={sizes} onChange={setSizes} />
 
         {/* Product Images (multiple) */}
         <div className="space-y-4 pt-2">
