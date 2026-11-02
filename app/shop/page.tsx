@@ -82,7 +82,7 @@ export default function ShopPage() {
     }
 
     return list;
-  }, [selectedCategory, selectedSize, selectedSort]);
+  }, [products, selectedCategory, selectedSize, selectedSort]);
 
   // Transform MockProduct for the ProductCard component
   const formatForCard = (p: MockProduct) => ({
