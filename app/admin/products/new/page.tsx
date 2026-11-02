@@ -195,7 +195,8 @@ export default function AdminNewProductPage() {
                 className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500 cursor-pointer"
               >
                 <option value="Women">Women</option>
-                <option value="Kids">Kids</option>
+                <option value="Boy">Boy</option>
+                <option value="Girl">Girl</option>
               </select>
             </div>
           </div>

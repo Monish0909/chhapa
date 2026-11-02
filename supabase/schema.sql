@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   price NUMERIC NOT NULL,
-  category TEXT NOT NULL CHECK (category IN ('women', 'kids', 'accessories')),
+  category TEXT NOT NULL CHECK (category IN ('women', 'boy', 'girl', 'accessories')),
   images TEXT[] NOT NULL DEFAULT '{}',
   size_chart JSONB DEFAULT '[]'::jsonb,
   ships_in_days INTEGER DEFAULT 7,

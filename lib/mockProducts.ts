@@ -18,7 +18,7 @@ export interface MockProduct {
   fabricCare: string;
   details: string;
   shippingReturns: string;
-  category: "women" | "kids" | "accessories";
+  category: "women" | "boy" | "girl" | "accessories";
   createdAt: string; // ISO date string for "Newest" sort
 }
 
@@ -116,7 +116,7 @@ export const mockProducts: MockProduct[] = [
       "Hand-quilted reversible Nehru vest designed for Little Chhapa. Reverses from indigo celestial strokes to warm terracotta brush foliage. Features wooden bead toggle buttons, fabric loop closures, and tagless neckline to prevent itching for sensory-sensitive little ones.",
     shippingReturns:
       "Prompt dispatch in 3-5 days. Comes with a complimentary handmade watercolor palette card for little explorers. Hassle-free exchange policy within 10 days.",
-    category: "kids",
+    category: "girl",
     createdAt: "2026-09-25T08:00:00.000Z",
   },
   {
@@ -146,7 +146,7 @@ export const mockProducts: MockProduct[] = [
       "Delicate hand-gathered waist with wooden button back placket, flutter sleeves, and freehand botanical vine brushwork.",
     shippingReturns:
       "Free express shipping. Delivery in 3-5 working days.",
-    category: "kids",
+    category: "girl",
     createdAt: "2026-09-23T11:00:00.000Z",
   },
   {

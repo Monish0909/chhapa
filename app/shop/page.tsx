@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ProductCard } from '@/components/product/ProductCard';
 import BlurText from '@/components/ui/BlurText';
@@ -8,13 +8,21 @@ import { BotanicalWatermark } from '@/components/ui/BotanicalWatermark';
 import { getProducts, MockProduct } from '@/lib/products';
 import { SlidersHorizontal, ArrowUpDown, X, Sparkles } from 'lucide-react';
 
-type CategoryFilter = 'All' | 'Women' | 'Kids';
+type CategoryFilter = 'All' | 'Women' | 'Boy' | 'Girl';
 type SortOption = 'Newest' | 'Price: Low to High' | 'Price: High to Low';
 
 export default function ShopPage() {
   const [products, setProducts] = useState<MockProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('All');
+
+  // Pre-select a category from links like /shop?category=boy
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get('category')?.toLowerCase();
+    if (param === 'women') setSelectedCategory('Women');
+    else if (param === 'boy') setSelectedCategory('Boy');
+    else if (param === 'girl') setSelectedCategory('Girl');
+  }, []);
   const [selectedSize, setSelectedSize] = useState<string>('All');
   const [selectedSort, setSelectedSort] = useState<SortOption>('Newest');
 
@@ -184,7 +192,7 @@ export default function ShopPage() {
               <SlidersHorizontal className="w-3.5 h-3.5 mr-1.5 text-terracotta" />
               Category:
             </span>
-            {(['All', 'Women', 'Kids'] as CategoryFilter[]).map((category) => {
+            {(['All', 'Women', 'Boy', 'Girl'] as CategoryFilter[]).map((category) => {
               const isActive = selectedCategory === category;
               return (
                 <button

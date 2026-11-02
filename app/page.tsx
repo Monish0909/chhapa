@@ -551,10 +551,10 @@ export default function HomePage() {
 
         
         {/* ================================================================ */}
-        {/* SECTION A.5: SHOP WOMEN & SHOP KIDS ENTRY CARDS */}
+        {/* SECTION A.5: SHOP WOMEN, BOY & GIRL ENTRY CARDS */}
         {/* ================================================================ */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             {/* Shop Women Card */}
             <BorderGlow
               borderRadius={28}
@@ -584,7 +584,7 @@ export default function HomePage() {
               </div>
             </BorderGlow>
 
-            {/* Shop Kids Card */}
+            {/* Shop Boy Card */}
             <BorderGlow
               borderRadius={28}
               fillOpacity={0.4}
@@ -597,16 +597,45 @@ export default function HomePage() {
                     Little Chhapa Edit
                   </span>
                   <h3 className="font-serif text-3xl sm:text-4xl text-terracotta-dark font-medium">
-                    Shop Kids
+                    Shop Boy
                   </h3>
                   <p className="text-sm text-terracotta-dark/80 max-w-sm leading-relaxed font-light">
-                    Gentle organic cotton frocks, natural indigo play sets, and hand-painted quilted Nehru vests for tender skin.
+                    Soft organic cotton kurtas, natural indigo play sets, and hand-painted quilted Nehru vests.
                   </p>
                 </div>
                 <div className="pt-6">
-                  <Link href="/shop?category=kids">
+                  <Link href="/shop?category=boy">
                     <GlassButton variant="solid" size="md">
-                      Explore Kids&apos; Craft <ArrowRight className="w-4 h-4 ml-2 inline" />
+                      Explore Boys&apos; Edit <ArrowRight className="w-4 h-4 ml-2 inline" />
+                    </GlassButton>
+                  </Link>
+                </div>
+              </div>
+            </BorderGlow>
+
+            {/* Shop Girl Card */}
+            <BorderGlow
+              borderRadius={28}
+              fillOpacity={0.4}
+              backgroundColor="rgba(253, 248, 240, 0.7)"
+              className="w-full"
+            >
+              <div className="p-8 sm:p-10 flex flex-col justify-between h-full min-h-[300px]">
+                <div className="space-y-3">
+                  <span className="text-xs uppercase tracking-widest text-terracotta font-semibold">
+                    Little Chhapa Edit
+                  </span>
+                  <h3 className="font-serif text-3xl sm:text-4xl text-terracotta-dark font-medium">
+                    Shop Girl
+                  </h3>
+                  <p className="text-sm text-terracotta-dark/80 max-w-sm leading-relaxed font-light">
+                    Gentle organic cotton frocks, hand-painted twirl skirts, and festive sets for tender skin.
+                  </p>
+                </div>
+                <div className="pt-6">
+                  <Link href="/shop?category=girl">
+                    <GlassButton variant="solid" size="md">
+                      Explore Girls&apos; Edit <ArrowRight className="w-4 h-4 ml-2 inline" />
                     </GlassButton>
                   </Link>
                 </div>

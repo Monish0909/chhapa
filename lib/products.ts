@@ -7,7 +7,7 @@ export interface DbProduct {
   id: string;
   name: string;
   price: number;
-  category: 'women' | 'kids' | 'accessories';
+  category: 'women' | 'boy' | 'girl' | 'accessories';
   images: string[];
   size_chart: SizeMeasurement[];
   ships_in_days: number;
@@ -57,9 +57,17 @@ export function formatDbProduct(row: Record<string, unknown>): MockProduct {
     fabricCare: (row.fabric_care as string) || 'Crafted from 100% natural organic cotton. Gentle cold handwash.',
     details: (row.details as string) || 'Handcrafted slow living piece with natural plant dyes.',
     shippingReturns: (row.shipping_returns as string) || 'Free insured shipping across India. Exchanges within 7 days.',
-    category: ((row.category as string)?.toLowerCase() as 'women' | 'kids' | 'accessories') || 'women',
+    category: normalizeCategory(row.category as string),
     createdAt: (row.created_at as string) || new Date().toISOString(),
   };
+}
+
+// Maps a raw DB category to the current set. Legacy "kids" rows show as "girl" until re-categorised in admin.
+function normalizeCategory(raw: string | undefined): MockProduct['category'] {
+  const c = (raw || '').toLowerCase();
+  if (c === 'boy' || c === 'girl' || c === 'women' || c === 'accessories') return c;
+  if (c === 'kids') return 'girl';
+  return 'women';
 }
 
 /**

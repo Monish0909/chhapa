@@ -31,7 +31,7 @@ const galleryItems = [
   {
     id: 2,
     title: 'Little Chhapa Flora Frock',
-    category: "Kids' Craft",
+    category: "Boys & Girls",
     aspect: 'aspect-[4/5]',
     tag: 'Mineral Terracotta',
     caption: 'Soft river-washed hand-painted frock tailored for gentle toddler skin.',
@@ -49,7 +49,7 @@ const galleryItems = [
   {
     id: 4,
     title: 'Junior Quilted Nehru Vest',
-    category: "Kids' Craft",
+    category: "Boys & Girls",
     aspect: 'aspect-[3/4]',
     tag: '100% Natural Dye',
     caption: 'Quilted hand-painted vest with wooden coconut shell buttons.',
