@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { ShoppingBag, ArrowRight, Sparkles } from 'lucide-react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Lenis from 'lenis';
 import { useCartStore } from '@/lib/store';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { GlassButton } from '@/components/ui/GlassButton';
@@ -131,31 +130,13 @@ export default function LookbookPage() {
     // ====================================================
     // 1. LENIS SMOOTH SCROLL SETUP
     // ====================================================
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-    });
-
-    // Synchronize Lenis scroll with GSAP ScrollTrigger
-    lenis.on('scroll', ScrollTrigger.update);
-
-    if (typeof window !== 'undefined') {
-      window.__lenis = lenis;
-    }
-
-    // Drive Lenis RAF through GSAP ticker for synchronous scroll scrub precision
-    const tickerCallback = (time: number) => {
-      lenis.raf(time * 1000);
-    };
-    gsap.ticker.add(tickerCallback);
-    gsap.ticker.lagSmoothing(0);
+    // Smooth scrolling is provided once, globally, by <SmoothScroll /> (components/providers).
 
     // ====================================================
     // 2. CANVAS SIZING & COVER-FIT LOGIC (DPR SUPPORT)
     // ====================================================
     const setCanvasDimensions = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = 1;
       const width = window.innerWidth;
       const height = window.innerHeight;
 
@@ -172,6 +153,7 @@ export default function LookbookPage() {
 
     // Plain object containing frame index for GSAP to animate
     const playhead = { frame: 0 };
+    let lastDrawnFrame = -1;
     const images: HTMLImageElement[] = [];
 
     // Helper: Draw current frame on canvas with object-fit: cover (True-color clean)
@@ -278,17 +260,16 @@ export default function LookbookPage() {
       // Scrub through video frames across the entire page's scrollable height
       gsap.to(playhead, {
         frame: frameCount - 1,
-        snap: 'frame',
         ease: 'none',
         scrollTrigger: {
           trigger: contentWrapper,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: 2,
+          scrub: 0.3,
           onUpdate: () => {
-            const rawFrame = Math.round(playhead.frame);
-            const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-            const currentFrame = isMobile ? Math.floor(rawFrame / 2) * 2 : rawFrame;
+            const currentFrame = Math.round(playhead.frame);
+            if (currentFrame === lastDrawnFrame) return;
+            lastDrawnFrame = currentFrame;
             renderFrame(currentFrame);
           },
         },
@@ -357,8 +338,6 @@ export default function LookbookPage() {
       loaderStopped = true;
       window.removeEventListener('resize', handleResize);
       ctxCleanup.revert();
-      gsap.ticker.remove(tickerCallback);
-      lenis.destroy();
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, []);

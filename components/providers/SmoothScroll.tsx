@@ -2,9 +2,13 @@
 
 import React, { useEffect } from 'react';
 import Lenis from 'lenis';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -12,22 +16,17 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     });
 
     // Expose lenis instance globally so modals and overlays can pause/resume scrolling smoothly
-    if (typeof window !== 'undefined') {
-      window.__lenis = lenis;
-    }
+    window.__lenis = lenis;
 
-    function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-
-    const rafId = requestAnimationFrame(raf);
+    // Single scroll engine: Lenis drives ScrollTrigger through the GSAP ticker
+    lenis.on('scroll', ScrollTrigger.update);
+    const tick = (time: number) => lenis.raf(time * 1000);
+    gsap.ticker.add(tick);
+    gsap.ticker.lagSmoothing(0);
 
     return () => {
-      cancelAnimationFrame(rafId);
-      if (typeof window !== 'undefined' && window.__lenis === lenis) {
-        window.__lenis = undefined;
-      }
+      gsap.ticker.remove(tick);
+      if (window.__lenis === lenis) window.__lenis = undefined;
       lenis.destroy();
     };
   }, []);
