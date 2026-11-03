@@ -114,7 +114,7 @@ export default function LookbookPage() {
       : { name: 'Login', href: '/login' },
   ];
 
-  const framePath = '/frames/lookbook';
+  const framePath = '/seq/lookbook';
   const frameCount = 192;
 
   useEffect(() => {
@@ -178,7 +178,14 @@ export default function LookbookPage() {
     const renderFrame = (index: number) => {
       // Clamp frame index strictly to bounds so it holds on last frame
       const safeIndex = Math.min(Math.max(index, 0), frameCount - 1);
-      const img = images[safeIndex];
+      // Use the nearest frame that has finished loading (avoids flashing the fallback)
+      let img: HTMLImageElement | undefined;
+      for (let d = 0; d < frameCount; d++) {
+        const a = images[safeIndex - d];
+        const b = images[safeIndex + d];
+        if (a && a.complete && a.naturalWidth > 1) { img = a; break; }
+        if (b && b.complete && b.naturalWidth > 1) { img = b; break; }
+      }
       const width = window.innerWidth;
       const height = window.innerHeight;
 
@@ -231,20 +238,35 @@ export default function LookbookPage() {
     // ====================================================
     // 3. PRELOAD IMAGE SEQUENCE
     // ====================================================
-    let firstFrameLoaded = false;
-    for (let i = 1; i <= frameCount; i++) {
-      const img = new Image();
-      const paddedIndex = String(i).padStart(4, '0');
-      img.src = `${framePath}/frame_${paddedIndex}.jpg`;
-
-      img.onload = () => {
-        if (!firstFrameLoaded && i === 1) {
-          firstFrameLoaded = true;
-          renderFrame(0);
+    // PRELOAD: coarse frames first (every 16th, 8th, 4th, 2nd, then the rest) with limited
+    // parallel requests, so scrubbing always has a nearby frame to show.
+    for (let i = 1; i <= frameCount; i++) images.push(new Image());
+    const loadOrder: number[] = [];
+    const queued = new Set<number>();
+    [16, 8, 4, 2, 1].forEach((step) => {
+      for (let i = 0; i < frameCount; i += step) {
+        if (!queued.has(i)) {
+          queued.add(i);
+          loadOrder.push(i);
         }
+      }
+    });
+    let loadCursor = 0;
+    let loaderStopped = false;
+    const loadNext = () => {
+      if (loaderStopped || loadCursor >= loadOrder.length) return;
+      const idx = loadOrder[loadCursor++];
+      const img = images[idx];
+      const done = () => {
+        renderFrame(Math.round(playhead.frame));
+        loadNext();
       };
-      images.push(img);
-    }
+      img.onload = done;
+      img.onerror = loadNext;
+      img.src = `${framePath}/frame_${String(idx + 1).padStart(4, '0')}.jpg`;
+    };
+    for (let k = 0; k < 6; k++) loadNext();
+
 
     // Immediate initial draw
     renderFrame(0);
@@ -332,6 +354,7 @@ export default function LookbookPage() {
     // 6. CLEANUP
     // ====================================================
     return () => {
+      loaderStopped = true;
       window.removeEventListener('resize', handleResize);
       ctxCleanup.revert();
       gsap.ticker.remove(tickerCallback);
