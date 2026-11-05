@@ -378,11 +378,11 @@ export default function CraftPage() {
           <Link
             href="/"
             className="hover:opacity-90 transition-opacity min-h-[44px] flex items-center group py-0.5"
-            aria-label="chhapa - Return to Home"
+            aria-label="CHAPAA - Return to Home"
           >
             <img
               src="/logo.png"
-              alt="chhapa"
+              alt="CHAPAA"
               className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
             />
           </Link>
@@ -537,7 +537,7 @@ export default function CraftPage() {
                     {/* Placeholder Artistic Graphic representation */}
                     <div className="absolute inset-0 flex items-center justify-center opacity-30 group-hover:scale-105 transition-transform duration-700">
                       <div className="w-32 h-32 rounded-full border-2 border-dashed border-cream/40 flex items-center justify-center font-serif text-cream text-lg">
-                        chhapa
+                        CHAPAA
                       </div>
                     </div>
 

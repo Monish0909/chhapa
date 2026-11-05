@@ -42,7 +42,7 @@ export function ProductCard({ product }: ProductCardProps) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center font-serif text-terracotta-400 bg-cream-200">
-              chhapa craft
+              CHAPAA craft
             </div>
           )}
           {product.featured && (

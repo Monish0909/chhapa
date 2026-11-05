@@ -137,11 +137,11 @@ export default function LoginPage() {
               <Link
                 href="/"
                 className="inline-flex flex-col items-center hover:opacity-90 transition-opacity group"
-                aria-label="chhapa - Return to Home"
+                aria-label="CHAPAA - Return to Home"
               >
                 <img
                   src="/logo.png"
-                  alt="chhapa"
+                  alt="CHAPAA"
                   className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-105"
                 />
               </Link>
@@ -172,8 +172,8 @@ export default function LoginPage() {
                   </div>
                   <p className="text-xs sm:text-sm text-terracotta-600 mt-2 font-light leading-relaxed">
                     {isRegister
-                      ? 'Join Chhapa to save your favorites, custom sizes, and track orders.'
-                      : 'Welcome back to Chhapa — continue your artisanal journey.'}
+                      ? 'Join CHAPAA to save your favorites, custom sizes, and track orders.'
+                      : 'Welcome back to CHAPAA — continue your artisanal journey.'}
                   </p>
                 </motion.div>
               </AnimatePresence>

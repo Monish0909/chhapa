@@ -92,7 +92,7 @@ export const mockProducts: MockProduct[] = [
   {
     id: "prod-little-play-vest",
     slug: "little-quilted-play-vest",
-    name: "Little Chhapa Hand-Painted Quilted Play Vest",
+    name: "Little CHAPAA Hand-Painted Quilted Play Vest",
     tagline: "Ultra-soft mulmul cotton quilted with hypoallergenic organic cotton batting",
     price: 2499,
     originalPrice: 2899,
@@ -115,7 +115,7 @@ export const mockProducts: MockProduct[] = [
     fabricCare:
       "100% breathable organic Mulmul cotton with pure natural plant dyes, completely chemical-free and gentle on delicate skin. Gentle machine wash in cold cycle inside out with organic baby detergent. Lay flat to dry.",
     details:
-      "Hand-quilted reversible Nehru vest designed for Little Chhapa. Reverses from indigo celestial strokes to warm terracotta brush foliage. Features wooden bead toggle buttons, fabric loop closures, and tagless neckline to prevent itching for sensory-sensitive little ones.",
+      "Hand-quilted reversible Nehru vest designed for Little CHAPAA. Reverses from indigo celestial strokes to warm terracotta brush foliage. Features wooden bead toggle buttons, fabric loop closures, and tagless neckline to prevent itching for sensory-sensitive little ones.",
     shippingReturns:
       "Prompt dispatch in 3-5 days. Comes with a complimentary handmade watercolor palette card for little explorers. Hassle-free exchange policy within 10 days.",
     category: "girl",
@@ -124,7 +124,7 @@ export const mockProducts: MockProduct[] = [
   {
     id: "prod-little-indigo-frock",
     slug: "little-indigo-brush-frock",
-    name: "Little Chhapa Hand-Painted Flora Frock",
+    name: "Little CHAPAA Hand-Painted Flora Frock",
     tagline: "Breathable hand-painted flared frock tailored with soft gathers for play",
     price: 2799,
     originalPrice: 3200,

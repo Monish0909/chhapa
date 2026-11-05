@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
           </div>
           <div>
             <span className="text-xs uppercase tracking-wider font-semibold text-slate-500">
-              Chhapa Staff
+              CHAPAA Staff
             </span>
             <h1 className="text-xl font-bold tracking-tight text-slate-900 mt-1">
               Admin Portal

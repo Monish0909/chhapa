@@ -406,11 +406,11 @@ export default function HomePage() {
           <Link
             href="/"
             className="hover:opacity-90 transition-opacity min-h-[44px] flex items-center group py-0.5"
-            aria-label="chhapa - Return to Home"
+            aria-label="CHAPAA - Return to Home"
           >
             <img
               src="/logo.png"
-              alt="chhapa"
+              alt="CHAPAA"
               className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
             />
           </Link>
@@ -594,7 +594,7 @@ export default function HomePage() {
               <div className="p-8 sm:p-10 flex flex-col justify-between h-full min-h-[300px]">
                 <div className="space-y-3">
                   <span className="text-xs uppercase tracking-widest text-terracotta font-semibold">
-                    Little Chhapa Edit
+                    Little CHAPAA Edit
                   </span>
                   <h3 className="font-serif text-3xl sm:text-4xl text-terracotta-dark font-medium">
                     Shop Boy
@@ -623,7 +623,7 @@ export default function HomePage() {
               <div className="p-8 sm:p-10 flex flex-col justify-between h-full min-h-[300px]">
                 <div className="space-y-3">
                   <span className="text-xs uppercase tracking-widest text-terracotta font-semibold">
-                    Little Chhapa Edit
+                    Little CHAPAA Edit
                   </span>
                   <h3 className="font-serif text-3xl sm:text-4xl text-terracotta-dark font-medium">
                     Shop Girl
@@ -691,7 +691,7 @@ export default function HomePage() {
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
-                          <span className="text-xs uppercase tracking-wider">chhapa silhouette</span>
+                          <span className="text-xs uppercase tracking-wider">CHAPAA silhouette</span>
                         )}
                         <div className="absolute top-2.5 left-2.5">
                           <Badge variant="terracotta">{product.category}</Badge>
@@ -875,14 +875,14 @@ export default function HomePage() {
           >
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-terracotta/10">
               <div className="space-y-3 md:col-span-2">
-                <Link href="/" className="inline-flex items-center space-x-3 group" aria-label="chhapa - Return to Home">
+                <Link href="/" className="inline-flex items-center space-x-3 group" aria-label="CHAPAA - Return to Home">
                   <img
                     src="/logo.png"
-                    alt="chhapa"
+                    alt="CHAPAA"
                     className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-105"
                   />
                   <span className="font-serif text-2xl tracking-wider text-terracotta-dark font-bold">
-                    chhapa
+                    CHAPAA
                   </span>
                 </Link>
                 <p className="text-xs text-terracotta-dark/80 max-w-sm leading-relaxed">
@@ -915,7 +915,7 @@ export default function HomePage() {
             </div>
 
             <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-terracotta-600">
-              <p>© {new Date().getFullYear()} Chhapa Handcrafts. All rights reserved.</p>
+              <p>© {new Date().getFullYear()} CHAPAA Handcrafts. All rights reserved.</p>
               <p className="mt-2 sm:mt-0 flex items-center">
                 Made with <Heart className="w-3.5 h-3.5 mx-1 text-terracotta fill-terracotta" /> for slow living
               </p>

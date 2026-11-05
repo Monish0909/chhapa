@@ -290,7 +290,7 @@ export function ScrollVideoHero({
               href="/"
               className="font-serif text-2xl sm:text-3xl tracking-wider text-terracotta-dark font-semibold hover:opacity-90 transition-opacity"
             >
-              chhapa
+              CHAPAA
             </Link>
 
             {/* Nav Links (Shop, Craft, Lookbook, Login) + Cart Icon Right */}

@@ -6,7 +6,7 @@ export const SHIPPING_RETURNS_TEXT =
 
 // WhatsApp & UPI Manual Payment Details
 export const CHHAPA_UPI_ID = "8005853709@ptyes";
-export const CHHAPA_UPI_PAYEE_NAME = "Chhapa";
+export const CHHAPA_UPI_PAYEE_NAME = "CHAPAA";
 export const CHHAPA_WHATSAPP_NUMBER = "918005853709";
 export const CHHAPA_WHATSAPP_DISPLAY = "+91 80058 53709";
 

@@ -43,11 +43,11 @@ export default function AdminLayout({
             <Link href="/admin" className="flex items-center space-x-2.5">
               <img
                 src="/logo.png"
-                alt="Chhapa"
+                alt="CHAPAA"
                 className="w-8 h-8 object-contain"
               />
               <span className="text-lg md:text-xl font-bold tracking-tight text-slate-900">
-                Chhapa
+                CHAPAA
               </span>
               <span className="text-xs uppercase tracking-wider font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                 Admin

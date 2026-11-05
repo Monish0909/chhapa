@@ -173,8 +173,8 @@ export default function CheckoutPage() {
     const lines: string[] = [];
     lines.push(
       order
-        ? `Hi Chhapa, I have placed order ${order.orderId}. Sharing my payment screenshot here.`
-        : 'Hi Chhapa, I am about to pay via UPI and will share my payment screenshot here.'
+        ? `Hi CHAPAA, I have placed order ${order.orderId}. Sharing my payment screenshot here.`
+        : 'Hi CHAPAA, I am about to pay via UPI and will share my payment screenshot here.'
     );
     lines.push('', '*ORDER ITEMS*');
     items.forEach((it, i) => {

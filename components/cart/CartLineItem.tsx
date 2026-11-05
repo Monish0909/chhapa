@@ -59,7 +59,7 @@ export function CartLineItem({ item, onRemove }: CartLineItemProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[10px] sm:text-xs text-terracotta-400 font-serif">
-            chhapa
+            CHAPAA
           </div>
         )}
       </div>

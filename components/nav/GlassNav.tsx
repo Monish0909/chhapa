@@ -128,11 +128,11 @@ export function GlassNav() {
           <Link
             href="/"
             className="hover:opacity-90 transition-opacity min-h-[44px] flex items-center group py-0.5"
-            aria-label="chhapa - Return to Home"
+            aria-label="CHAPAA - Return to Home"
           >
             <img
               src="/logo.png"
-              alt="chhapa"
+              alt="CHAPAA"
               className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
             />
           </Link>

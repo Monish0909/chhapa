@@ -20,7 +20,7 @@ export function ProductGallery({ images, productName = 'Product' }: ProductGalle
         className="w-full"
       >
         <div className="aspect-[3/4] rounded-3xl bg-cream-200/50 flex flex-col items-center justify-center font-serif text-terracotta-400 p-8 text-center">
-          <span className="text-lg">chhapa artisanal silhouette</span>
+          <span className="text-lg">CHAPAA artisanal silhouette</span>
           <span className="text-xs text-terracotta-400/80 font-sans mt-2">Crafted with botanical pigments</span>
         </div>
       </BorderGlow>
