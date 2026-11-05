@@ -1,3 +1,4 @@
+import { SHIPPING_RETURNS_TEXT } from '@/lib/constants';
 import { supabase } from './supabase';
 import type { MockProduct, SizeMeasurement } from './mockProducts';
 
@@ -73,7 +74,8 @@ export function formatDbProduct(row: Record<string, unknown>): MockProduct {
     sold: Boolean(row.sold),
     fabricCare: (row.fabric_care as string) || 'Crafted from 100% natural organic cotton. Gentle cold handwash.',
     details: (row.details as string) || 'Handcrafted slow living piece with natural plant dyes.',
-    shippingReturns: (row.shipping_returns as string) || 'Free insured shipping across India. Exchanges within 7 days.',
+    // Policy is the same for every piece (made to order), so it is not read from the database row
+    shippingReturns: SHIPPING_RETURNS_TEXT,
     category,
     createdAt: (row.created_at as string) || new Date().toISOString(),
   };

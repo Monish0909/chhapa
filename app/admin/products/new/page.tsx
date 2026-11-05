@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import ImageUploader from '@/components/admin/ImageUploader';
+import { SHIPPING_RETURNS_TEXT } from '@/lib/constants';
 import SizePicker from '@/components/admin/SizePicker';
 import KidsSizePricing from '@/components/admin/KidsSizePricing';
 import { DEFAULT_SIZES, buildSizeChart, buildKidsSizeChart } from '@/lib/sizes';
@@ -73,7 +74,7 @@ export default function AdminNewProductPage() {
         sold: false,
         fabric_care: formData.fabricCare || 'Crafted from 100% natural organic cotton. Gentle cold handwash.',
         details: formData.description || 'Handcrafted slow living piece with natural plant dyes.',
-        shipping_returns: 'Free insured shipping across India. Exchanges accepted within 7 days in unworn condition.',
+        shipping_returns: SHIPPING_RETURNS_TEXT,
       });
 
       if (error) {

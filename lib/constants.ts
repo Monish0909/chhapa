@@ -1,6 +1,9 @@
 export const SHIPPING_FEE = 99; // Flat shipping fee in INR
 export const FREE_SHIPPING_THRESHOLD = 2000;
 
+export const SHIPPING_RETURNS_TEXT =
+  'Shipped across India. As every piece is made to order, there are no returns or exchanges.';
+
 // WhatsApp & UPI Manual Payment Details
 export const CHHAPA_UPI_ID = "8005853709@ptyes";
 export const CHHAPA_UPI_PAYEE_NAME = "Chhapa";
