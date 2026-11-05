@@ -62,7 +62,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
           <div className="mt-3 flex items-baseline space-x-2">
             <span className="text-base font-semibold text-terracotta">
-              ₹{product.price.toLocaleString('en-IN')}
+              {product.priceFrom && <span className="text-xs font-normal mr-1">From</span>}₹{product.price.toLocaleString('en-IN')}
             </span>
             {product.originalPrice && (
               <span className="text-xs line-through text-terracotta-400">

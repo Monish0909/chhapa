@@ -11,6 +11,7 @@ export interface Product {
   category: string;
   craftDetails?: string;
   inStock: boolean;
+  priceFrom?: boolean;
   featured?: boolean;
 }
 

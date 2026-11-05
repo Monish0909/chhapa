@@ -6,7 +6,7 @@ import { ProductCard } from '@/components/product/ProductCard';
 import BlurText from '@/components/ui/BlurText';
 import { BotanicalWatermark } from '@/components/ui/BotanicalWatermark';
 import { getProducts, MockProduct } from '@/lib/products';
-import { SIZE_OPTIONS } from '@/lib/sizes';
+import { SIZE_OPTIONS, KIDS_SIZES } from '@/lib/sizes';
 import { SlidersHorizontal, ArrowUpDown, X, Sparkles } from 'lucide-react';
 
 type CategoryFilter = 'All' | 'Women' | 'Boy' | 'Girl' | 'Accessories';
@@ -43,11 +43,13 @@ export default function ShopPage() {
       });
   }, []);
 
-  // Size filter: XS to 3XL (sizes apply to Women's wear only)
-  const availableSizes = useMemo(() => {
-    const list: string[] = [...SIZE_OPTIONS];
-    return list;
-  }, [products]);
+  // Size filter depends on the category: Women XS-3XL, Boy/Girl age ranges, Accessories none
+  const availableSizes = useMemo<string[]>(() => {
+    if (selectedCategory === 'Women') return [...SIZE_OPTIONS];
+    if (selectedCategory === 'Boy' || selectedCategory === 'Girl') return [...KIDS_SIZES];
+    if (selectedCategory === 'Accessories') return [];
+    return [...SIZE_OPTIONS, ...KIDS_SIZES];
+  }, [selectedCategory]);
 
   // Filter and sort products reactively
   const filteredProducts = useMemo(() => {
@@ -90,6 +92,7 @@ export default function ShopPage() {
     name: p.name,
     description: p.details,
     price: p.price,
+    priceFrom: !!p.sizePrices && new Set(Object.values(p.sizePrices)).size > 1,
     originalPrice: p.originalPrice,
     images: p.images,
     sizes: p.sizes,
@@ -97,13 +100,13 @@ export default function ShopPage() {
     inStock: !p.sold,
   });
 
-  const showSizeFilter = selectedCategory === 'All' || selectedCategory === 'Women';
+  const showSizeFilter = availableSizes.length > 0;
 
   const hasActiveFilters = selectedCategory !== 'All' || selectedSize !== 'All';
 
   useEffect(() => {
-    if (!showSizeFilter && selectedSize !== 'All') setSelectedSize('All');
-  }, [showSizeFilter, selectedSize]);
+    if (selectedSize !== 'All' && !availableSizes.includes(selectedSize)) setSelectedSize('All');
+  }, [availableSizes, selectedSize]);
 
   const resetFilters = () => {
     setSelectedCategory('All');

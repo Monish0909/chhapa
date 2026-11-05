@@ -71,7 +71,7 @@ export default function ProductDetailPage({ params }: PageProps) {
     addItem({
       productId: productData.id,
       name: productData.name,
-      price: productData.price,
+      price: productData.sizePrices?.[chosen] ?? productData.price,
       image: productData.images[0] || '',
       size: chosen,
       quantity: 1,
@@ -257,7 +257,10 @@ export default function ProductDetailPage({ params }: PageProps) {
             {/* Price */}
             <div className="mt-4 flex items-baseline space-x-3 pb-6 border-b border-terracotta/15">
               <span className="text-3xl font-semibold text-terracotta font-serif">
-                ₹{productData.price.toLocaleString('en-IN')}
+                {!selectedSize && productData.sizePrices && new Set(Object.values(productData.sizePrices)).size > 1 && (
+                  <span className="text-base font-normal mr-2">From</span>
+                )}
+                ₹{(selectedSize && productData.sizePrices?.[selectedSize] ? productData.sizePrices[selectedSize] : productData.price).toLocaleString('en-IN')}
               </span>
               {productData.originalPrice && (
                 <span className="text-sm line-through text-terracotta-400">
@@ -306,6 +309,11 @@ export default function ProductDetailPage({ params }: PageProps) {
                           }`}
                         >
                           {sz}
+                          {productData.sizePrices?.[sz] ? (
+                            <span className="block text-[10px] font-normal opacity-80">
+                              ₹{productData.sizePrices[sz].toLocaleString('en-IN')}
+                            </span>
+                          ) : null}
                         </button>
                       );
                     })}

@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import ImageUploader from '@/components/admin/ImageUploader';
 import SizePicker from '@/components/admin/SizePicker';
-import { DEFAULT_SIZES, buildSizeChart } from '@/lib/sizes';
+import KidsSizePricing from '@/components/admin/KidsSizePricing';
+import { DEFAULT_SIZES, buildSizeChart, buildKidsSizeChart } from '@/lib/sizes';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -20,6 +21,7 @@ export default function AdminNewProductPage() {
 
   const [images, setImages] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>(DEFAULT_SIZES);
+  const [kidsPrices, setKidsPrices] = useState<Record<string, string>>({});
   const [imagesBusy, setImagesBusy] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,6 +42,13 @@ export default function AdminNewProductPage() {
     const priceNum = parseFloat(formData.price) || 0;
     const shipsDaysNum = Math.max(0, ...(formData.shipsInDays.match(/\d+/g) || []).map(Number)) || 7;
     const isWomen = formData.category === 'Women';
+    const isKids = formData.category === 'Boy' || formData.category === 'Girl';
+    const kidsChart = buildKidsSizeChart(kidsPrices);
+    if (isKids && kidsChart.length === 0) {
+      setErrorMessage('Please enter a price for at least one size (1-5 years or 5-10 years).');
+      setIsSubmitting(false);
+      return;
+    }
     if (isWomen && sizes.length === 0) {
       setErrorMessage('Please select at least one size.');
       setIsSubmitting(false);
@@ -56,10 +65,10 @@ export default function AdminNewProductPage() {
     try {
       const { error } = await supabase.from('products').insert({
         name: formData.name,
-        price: priceNum,
+        price: isKids ? Math.min(...kidsChart.map((c) => c.price)) : priceNum,
         category: categoryLower,
         images: imagesArray,
-        size_chart: buildSizeChart(isWomen ? sizes : []),
+        size_chart: isKids ? kidsChart : buildSizeChart(isWomen ? sizes : []),
         ships_in_days: shipsDaysNum,
         sold: false,
         fabric_care: formData.fabricCare || 'Crafted from 100% natural organic cotton. Gentle cold handwash.',
@@ -137,6 +146,7 @@ export default function AdminNewProductPage() {
                 });
                 setImages([]);
                 setSizes(DEFAULT_SIZES);
+                setKidsPrices({});
               }}
               className="px-3 py-1.5 bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-800 rounded text-xs font-medium transition-colors"
             >
@@ -175,12 +185,12 @@ export default function AdminNewProductPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
-                Price (INR ₹) <span className="text-red-500">*</span>
+                Price (INR ₹) {formData.category === 'Boy' || formData.category === 'Girl' ? <span className="text-slate-400 font-normal">(set per size below)</span> : <span className="text-red-500">*</span>}
               </label>
               <input
                 type="number"
                 name="price"
-                required
+                required={!(formData.category === 'Boy' || formData.category === 'Girl')}
                 min={0}
                 value={formData.price}
                 onChange={handleInputChange}
@@ -261,6 +271,9 @@ export default function AdminNewProductPage() {
         </div>
 
         {formData.category === 'Women' && <SizePicker value={sizes} onChange={setSizes} />}
+        {(formData.category === 'Boy' || formData.category === 'Girl') && (
+          <KidsSizePricing value={kidsPrices} onChange={setKidsPrices} />
+        )}
 
         {/* Product Images (multiple) */}
         <div className="space-y-4 pt-2">

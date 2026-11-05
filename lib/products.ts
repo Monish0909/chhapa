@@ -35,27 +35,40 @@ export function formatDbProduct(row: Record<string, unknown>): MockProduct {
   const rowSizes = row.sizes as string[] | undefined;
   const rowSizeChart = row.size_chart as Array<{ size?: string } | string> | undefined;
   const category = normalizeCategory(row.category as string);
-  // Sizes only apply to Women's wear; Boy, Girl and Accessories are sold without a size choice
-  const sizes = category !== 'women'
+  const chart = (Array.isArray(rowSizeChart) ? rowSizeChart : []) as Array<{ size?: string; price?: number } | string>;
+  const isKids = category === 'boy' || category === 'girl';
+
+  // Boy / Girl: sizes (and per-size prices) come from size_chart; Accessories: no sizes; Women: as saved.
+  const sizePrices: Record<string, number> = {};
+  if (isKids) {
+    chart.forEach((c) => {
+      if (typeof c !== 'string' && c.size && Number(c.price) > 0) sizePrices[c.size] = Number(c.price);
+    });
+  }
+  const sizes = category === 'accessories'
     ? ['One Size']
+    : isKids
+    ? Object.keys(sizePrices).length > 0 ? Object.keys(sizePrices) : ['One Size']
     : Array.isArray(rowSizes) && rowSizes.length > 0
     ? rowSizes
-    : Array.isArray(rowSizeChart) && rowSizeChart.length > 0
-    ? rowSizeChart.map((s) => (typeof s === 'string' ? s : s.size || 'One Size'))
+    : chart.length > 0
+    ? chart.map((s) => (typeof s === 'string' ? s : s.size || 'One Size'))
     : ['One Size'];
+  const kidsMin = Object.values(sizePrices).length ? Math.min(...Object.values(sizePrices)) : 0;
 
   return {
     id: String(row.id || ''),
     slug,
     name: String(row.name || ''),
     tagline: typeof row.tagline === 'string' ? row.tagline : typeof row.details === 'string' ? row.details.slice(0, 90) + '...' : undefined,
-    price: Number(row.price || 0),
+    price: isKids && kidsMin ? kidsMin : Number(row.price || 0),
     originalPrice: row.original_price ? Number(row.original_price) : undefined,
     images: Array.isArray(row.images) && row.images.length > 0
       ? (row.images as string[])
       : ['/frames/home/frame_0001.jpg'],
     sizes,
     sizeChart: category === 'women' && Array.isArray(row.size_chart) ? (row.size_chart as SizeMeasurement[]) : [],
+    sizePrices: isKids ? sizePrices : undefined,
     shipsInDays: row.ships_in_days ? `${row.ships_in_days} days` : '7-10 days',
     sold: Boolean(row.sold),
     fabricCare: (row.fabric_care as string) || 'Crafted from 100% natural organic cotton. Gentle cold handwash.',

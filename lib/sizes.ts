@@ -1,7 +1,8 @@
 export const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'] as const;
+export const KIDS_SIZES = ['1-5 years', '5-10 years'] as const;
 export const DEFAULT_SIZES = ['S', 'M', 'L', 'XL'];
 
-const ORDER: string[] = [...SIZE_OPTIONS];
+const ORDER: string[] = [...SIZE_OPTIONS, ...KIDS_SIZES];
 
 export function sortSizes(sizes: string[]): string[] {
   return [...sizes].sort((a, b) => {
@@ -33,4 +34,13 @@ export function buildSizeChart(
       measurements: kept?.measurements ?? MEASUREMENTS[size] ?? { Chest: '-', Waist: '-', Length: '-' },
     };
   });
+}
+
+// Boy / Girl: each size carries its own price, stored inside size_chart (no database change needed).
+export function buildKidsSizeChart(prices: Record<string, string>) {
+  return KIDS_SIZES.filter((sz) => Number(prices[sz]) > 0).map((sz) => ({
+    size: sz,
+    price: Number(prices[sz]),
+    measurements: {},
+  }));
 }

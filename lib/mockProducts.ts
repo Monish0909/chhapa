@@ -1,6 +1,7 @@
 export interface SizeMeasurement {
   size: string;
   measurements: Record<string, string | number>;
+  price?: number; // per-size price (used for Boy / Girl sizes)
 }
 
 export interface MockProduct {
@@ -13,6 +14,7 @@ export interface MockProduct {
   images: string[];
   sizes: string[];
   sizeChart: SizeMeasurement[];
+  sizePrices?: Record<string, number>;
   shipsInDays: string;
   sold: boolean;
   fabricCare: string;
