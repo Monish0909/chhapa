@@ -70,13 +70,14 @@ export default function AdminNewProductPage() {
       if (error) {
         console.warn('Supabase product insert warning:', error.message);
         setErrorMessage(error.message);
+      } else {
+        setIsSaved(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      setIsSaved(true);
     } catch (err: unknown) {
       console.error('Failed to create product in Supabase:', err);
       const msg = err instanceof Error ? err.message : 'Error saving product';
       setErrorMessage(msg);
-      setIsSaved(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -268,6 +269,18 @@ export default function AdminNewProductPage() {
           </h2>
           <ImageUploader images={images} onChange={setImages} onBusyChange={setImagesBusy} />
         </div>
+
+        {errorMessage && !isSaved && (
+          <div role="alert" className="p-3 rounded-md bg-red-50 border border-red-200 text-red-800 text-sm">
+            <p className="font-semibold">Could not save the product</p>
+            <p className="text-xs mt-1 break-words">{errorMessage}</p>
+            {/check|constraint|category/i.test(errorMessage) && (
+              <p className="text-xs mt-1">
+                The database may not know the new categories yet. Run <code>supabase/migrate-categories.sql</code> in the Supabase SQL Editor.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Submit Button */}
         <div className="pt-4 border-t border-slate-200 flex justify-end space-x-3">
