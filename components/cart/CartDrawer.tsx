@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { X, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { CartLineItem } from './CartLineItem';
