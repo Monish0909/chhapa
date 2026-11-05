@@ -183,14 +183,15 @@ export default function AdminNewProductPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {formData.category !== 'Boy' && formData.category !== 'Girl' && (
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
-                Price (INR ₹) {formData.category === 'Boy' || formData.category === 'Girl' ? <span className="text-slate-400 font-normal">(set per size below)</span> : <span className="text-red-500">*</span>}
+                Price (INR ₹) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 name="price"
-                required={!(formData.category === 'Boy' || formData.category === 'Girl')}
+                required
                 min={0}
                 value={formData.price}
                 onChange={handleInputChange}
@@ -198,6 +199,7 @@ export default function AdminNewProductPage() {
                 className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
               />
             </div>
+            )}
 
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
