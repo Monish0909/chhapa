@@ -582,16 +582,12 @@ export default function CraftPage() {
               By choosing slow freehand hand-painted textiles, you directly support multi-generational artisan families and keep ancient sustainable dyeing traditions thriving.
             </p>
             <div className="pt-4 flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/shop">
-                <GlassButton variant="solid" size="lg">
+              <GlassButton href="/shop" variant="solid" size="lg">
                   Shop Handcrafted Pieces <ArrowRight className="w-4 h-4 ml-2 inline" />
                 </GlassButton>
-              </Link>
-              <Link href="/lookbook">
-                <GlassButton variant="glass" size="lg">
+              <GlassButton href="/lookbook" variant="glass" size="lg">
                   View Lookbook
                 </GlassButton>
-              </Link>
             </div>
           </GlassPanel>
         </section>

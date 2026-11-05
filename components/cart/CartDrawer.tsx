@@ -44,11 +44,9 @@ export function CartDrawer() {
                 <div className="text-center py-16 text-terracotta-600">
                   <p className="font-serif text-lg">Your bag is empty</p>
                   <p className="text-xs mt-2">Explore our artisanal hand-crafted collection</p>
-                  <Link href="/shop" onClick={closeCart}>
-                    <GlassButton className="mt-6" size="sm">
+                  <GlassButton href="/shop" onClick={closeCart} className="mt-6" size="sm">
                       Explore Shop
                     </GlassButton>
-                  </Link>
                 </div>
               ) : (
                 cartItems.map((item) => (
@@ -73,16 +71,12 @@ export function CartDrawer() {
                 Taxes and shipping calculated at checkout
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <Link href="/cart" onClick={closeCart} className="w-full">
-                  <GlassButton variant="outline" className="w-full">
+                <GlassButton href="/cart" onClick={closeCart} variant="outline" className="w-full">
                     View Cart
                   </GlassButton>
-                </Link>
-                <Link href="/checkout" onClick={closeCart} className="w-full">
-                  <GlassButton variant="solid" className="w-full">
+                <GlassButton href="/checkout" onClick={closeCart} variant="solid" className="w-full">
                     Checkout
                   </GlassButton>
-                </Link>
               </div>
             </div>
           )}

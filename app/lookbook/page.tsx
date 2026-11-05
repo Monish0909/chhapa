@@ -562,11 +562,9 @@ export default function LookbookPage() {
               Explore the complete collection of freehand hand-painted garments created with botanical natural dyes.
             </p>
             <div className="pt-4 flex justify-center">
-              <Link href="/shop">
-                <GlassButton variant="solid" size="lg">
+              <GlassButton href="/shop" variant="solid" size="lg">
                   Shop Lookbook Outfits <ArrowRight className="w-4 h-4 ml-2 inline" />
                 </GlassButton>
-              </Link>
             </div>
           </GlassPanel>
         </section>

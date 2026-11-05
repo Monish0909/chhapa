@@ -533,16 +533,12 @@ export default function HomePage() {
                 </p>
 
                 <div className="mt-8 flex justify-center gap-4">
-                  <Link href="/shop">
-                    <GlassButton variant="solid" size="lg">
+                  <GlassButton href="/shop" variant="solid" size="lg">
                       Shop Collection
                     </GlassButton>
-                  </Link>
-                  <Link href="/craft">
-                    <GlassButton variant="glass" size="lg">
+                  <GlassButton href="/craft" variant="glass" size="lg">
                       Our Craft Story
                     </GlassButton>
-                  </Link>
                 </div>
               </GlassPanel>
             </div>
@@ -575,11 +571,9 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="pt-6">
-                  <Link href="/shop?category=women">
-                    <GlassButton variant="solid" size="md">
+                  <GlassButton href="/shop?category=women" variant="solid" size="md">
                       Explore Women&apos;s Edit <ArrowRight className="w-4 h-4 ml-2 inline" />
                     </GlassButton>
-                  </Link>
                 </div>
               </div>
             </BorderGlow>
@@ -604,11 +598,9 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="pt-6">
-                  <Link href="/shop?category=boy">
-                    <GlassButton variant="solid" size="md">
+                  <GlassButton href="/shop?category=boy" variant="solid" size="md">
                       Explore Boys&apos; Edit <ArrowRight className="w-4 h-4 ml-2 inline" />
                     </GlassButton>
-                  </Link>
                 </div>
               </div>
             </BorderGlow>
@@ -633,11 +625,9 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="pt-6">
-                  <Link href="/shop?category=girl">
-                    <GlassButton variant="solid" size="md">
+                  <GlassButton href="/shop?category=girl" variant="solid" size="md">
                       Explore Girls&apos; Edit <ArrowRight className="w-4 h-4 ml-2 inline" />
                     </GlassButton>
-                  </Link>
                 </div>
               </div>
             </BorderGlow>
@@ -774,11 +764,9 @@ export default function HomePage() {
                 Every garment begins with unbleached organic fibers laid over low drafting frames, brought to life through intuitive freehand brush strokes and living fermented plant dyes.
               </p>
               <div className="pt-4">
-                <Link href="/craft">
-                  <GlassButton variant="solid" size="md">
+                <GlassButton href="/craft" variant="solid" size="md">
                     Discover Our Craft Process
                   </GlassButton>
-                </Link>
               </div>
             </div>
           </BorderGlow>
