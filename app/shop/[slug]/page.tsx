@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Check, Ruler, Truck, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowLeft, Check, Truck, ShieldCheck, Sparkles } from 'lucide-react';
 import { ProductGallery } from '@/components/product/ProductGallery';
-import { SizeChartModal } from '@/components/product/SizeChartModal';
 import { sortSizes } from '@/lib/sizes';
 import { ProductAccordion, AccordionSection } from '@/components/product/ProductAccordion';
 import { useCartStore } from '@/lib/store';
@@ -42,7 +41,6 @@ export default function ProductDetailPage({ params }: PageProps) {
     };
   }, [slug]);
 
-  const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -282,13 +280,6 @@ export default function ProductDetailPage({ params }: PageProps) {
                     <span className="text-xs font-semibold uppercase tracking-wider text-terracotta-dark">
                       Select Size
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsSizeChartOpen(true)}
-                      className="text-[11px] text-terracotta hover:text-terracotta-600 underline underline-offset-2"
-                    >
-                      Size guide
-                    </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {options.map((sz) => {
@@ -325,29 +316,8 @@ export default function ProductDetailPage({ params }: PageProps) {
               );
             })()}
 
-            {/* Interactive Callout Boxes: Size Guide & Ships-In */}
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Size chart callout (only when the piece has a size chart) */}
-              {productData.sizeChart && productData.sizeChart.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setIsSizeChartOpen(true)}
-                className="flex items-center space-x-3 p-3.5 rounded-xl border border-terracotta/20 bg-white/40 hover:bg-white/70 hover:border-terracotta/40 transition-all text-left group"
-              >
-                <div className="w-9 h-9 rounded-lg bg-terracotta/10 flex items-center justify-center text-terracotta flex-shrink-0 group-hover:scale-105 transition-transform">
-                  <Ruler className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-[11px] uppercase tracking-wider text-terracotta-600 font-semibold block">
-                    Fit Details
-                  </span>
-                  <span className="text-xs font-medium text-terracotta-dark group-hover:text-terracotta transition-colors">
-                    View Size &amp; Fit Guide
-                  </span>
-                </div>
-              </button>
-              )}
-
+            {/* Dispatch time callout */}
+            <div className="mt-6 grid grid-cols-1 gap-3">
               {/* Ships-in callout */}
               <div className="flex items-center space-x-3 p-3.5 rounded-xl border border-terracotta/20 bg-white/40">
                 <div className="w-9 h-9 rounded-lg bg-terracotta/10 flex items-center justify-center text-terracotta flex-shrink-0">
@@ -428,13 +398,6 @@ export default function ProductDetailPage({ params }: PageProps) {
         <ProductAccordion sections={accordionSections} />
       </section>
 
-      {/* Size Chart Modal */}
-      <SizeChartModal
-        isOpen={isSizeChartOpen}
-        onClose={() => setIsSizeChartOpen(false)}
-        sizeChart={productData.sizeChart}
-        productName={productData.name}
-      />
     </div>
   );
 }
