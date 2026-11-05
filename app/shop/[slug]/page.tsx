@@ -319,7 +319,8 @@ export default function ProductDetailPage({ params }: PageProps) {
 
             {/* Interactive Callout Boxes: Size Guide & Ships-In */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Size chart callout */}
+              {/* Size chart callout (only when the piece has a size chart) */}
+              {productData.sizeChart && productData.sizeChart.length > 0 && (
               <button
                 type="button"
                 onClick={() => setIsSizeChartOpen(true)}
@@ -337,6 +338,7 @@ export default function ProductDetailPage({ params }: PageProps) {
                   </span>
                 </div>
               </button>
+              )}
 
               {/* Ships-in callout */}
               <div className="flex items-center space-x-3 p-3.5 rounded-xl border border-terracotta/20 bg-white/40">

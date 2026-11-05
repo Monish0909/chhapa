@@ -43,10 +43,9 @@ export default function ShopPage() {
       });
   }, []);
 
-  // Size filter: always offer XS to 3XL, plus "One Size" if any product uses it
+  // Size filter: XS to 3XL (sizes apply to Women's wear only)
   const availableSizes = useMemo(() => {
     const list: string[] = [...SIZE_OPTIONS];
-    if (products.some((p) => p.sizes?.includes('One Size'))) list.push('One Size');
     return list;
   }, [products]);
 
@@ -98,7 +97,13 @@ export default function ShopPage() {
     inStock: !p.sold,
   });
 
+  const showSizeFilter = selectedCategory === 'All' || selectedCategory === 'Women';
+
   const hasActiveFilters = selectedCategory !== 'All' || selectedSize !== 'All';
+
+  useEffect(() => {
+    if (!showSizeFilter && selectedSize !== 'All') setSelectedSize('All');
+  }, [showSizeFilter, selectedSize]);
 
   const resetFilters = () => {
     setSelectedCategory('All');
@@ -236,7 +241,8 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* Secondary Row: Available Size Range Filter */}
+        {/* Secondary Row: Available Size Range Filter (Women only) */}
+        {showSizeFilter && (
         <div className="pt-3 border-t border-terracotta/10 flex flex-wrap items-center gap-2">
           <span className="text-xs uppercase tracking-wider font-semibold text-terracotta-dark mr-1">
             Size:
@@ -282,6 +288,7 @@ export default function ShopPage() {
             </button>
           )}
         </div>
+        )}
       </div>
 
       {/* Results Header / Counter */}

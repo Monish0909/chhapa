@@ -34,7 +34,11 @@ export function formatDbProduct(row: Record<string, unknown>): MockProduct {
   // Extract sizes from size_chart if available
   const rowSizes = row.sizes as string[] | undefined;
   const rowSizeChart = row.size_chart as Array<{ size?: string } | string> | undefined;
-  const sizes = Array.isArray(rowSizes) && rowSizes.length > 0
+  const category = normalizeCategory(row.category as string);
+  // Sizes only apply to Women's wear; Boy, Girl and Accessories are sold without a size choice
+  const sizes = category !== 'women'
+    ? ['One Size']
+    : Array.isArray(rowSizes) && rowSizes.length > 0
     ? rowSizes
     : Array.isArray(rowSizeChart) && rowSizeChart.length > 0
     ? rowSizeChart.map((s) => (typeof s === 'string' ? s : s.size || 'One Size'))
@@ -51,13 +55,13 @@ export function formatDbProduct(row: Record<string, unknown>): MockProduct {
       ? (row.images as string[])
       : ['/frames/home/frame_0001.jpg'],
     sizes,
-    sizeChart: Array.isArray(row.size_chart) ? (row.size_chart as SizeMeasurement[]) : [],
+    sizeChart: category === 'women' && Array.isArray(row.size_chart) ? (row.size_chart as SizeMeasurement[]) : [],
     shipsInDays: row.ships_in_days ? `${row.ships_in_days} days` : '7-10 days',
     sold: Boolean(row.sold),
     fabricCare: (row.fabric_care as string) || 'Crafted from 100% natural organic cotton. Gentle cold handwash.',
     details: (row.details as string) || 'Handcrafted slow living piece with natural plant dyes.',
     shippingReturns: (row.shipping_returns as string) || 'Free insured shipping across India. Exchanges within 7 days.',
-    category: normalizeCategory(row.category as string),
+    category,
     createdAt: (row.created_at as string) || new Date().toISOString(),
   };
 }

@@ -138,7 +138,8 @@ export default function AdminEditProductPage() {
     const priceNum = parseFloat(formData.price) || 0;
     const shipsDaysNum = Math.max(0, ...(formData.shipsInDays.match(/\d+/g) || []).map(Number)) || 7;
     
-    if (sizes.length === 0) {
+    const isWomen = formData.category === 'Women';
+    if (isWomen && sizes.length === 0) {
       setErrorMessage('Please select at least one size.');
       setIsSubmitting(false);
       return;
@@ -160,7 +161,7 @@ export default function AdminEditProductPage() {
           price: priceNum,
           category: categoryLower,
           images: imagesArray,
-          size_chart: buildSizeChart(sizes, sizeChart),
+          size_chart: buildSizeChart(isWomen ? sizes : [], sizeChart),
           ships_in_days: shipsDaysNum,
           fabric_care: formData.fabricCare,
           details: formData.description,
@@ -400,7 +401,7 @@ export default function AdminEditProductPage() {
           </div>
         </div>
 
-        <SizePicker value={sizes} onChange={setSizes} />
+        {formData.category === 'Women' && <SizePicker value={sizes} onChange={setSizes} />}
 
         {/* Product Images (multiple) */}
         <div className="space-y-4 pt-2">
